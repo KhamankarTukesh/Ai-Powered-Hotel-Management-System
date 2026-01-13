@@ -19,14 +19,19 @@ export const addRoom = async (req, res) => {
     }
 };
 
+// Saare Rooms Dekhna (With Student Details)
 export const getAllRooms = async (req, res) => {
     try {
-        const rooms = await Room.find().populate('occupants', 'fullName email');
+        // .populate 'occupants' field ko real user data se bhar dega
+        const rooms = await Room.find().populate({
+            path: 'occupants',
+            select: 'fullName studentDetails.rollNumber studentDetails.department' 
+        });
         res.status(200).json(rooms);
     } catch (error) {
         res.status(500).json({ message: "Server Error", error: error.message });
     }
-}
+};
 
 
 // 3. STUDENT KO ROOM ASSIGN KARNA (Only Warden/Admin)
