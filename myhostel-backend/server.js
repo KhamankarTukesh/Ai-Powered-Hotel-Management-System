@@ -1,14 +1,15 @@
+import dotenv from 'dotenv';
+dotenv.config();
 import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
-import dotenv from 'dotenv';
 
 
 import authRoutes from './routes/authRoutes.js';
 import roomRoutes from './routes/roomRoutes.js';
 import complaintRoutes from './routes/complaintRoutes.js';
 
-dotenv.config();
+
 
 const app = express();
 
