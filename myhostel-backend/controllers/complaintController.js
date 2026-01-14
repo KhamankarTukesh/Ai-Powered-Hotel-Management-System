@@ -1,71 +1,61 @@
+import dotenv from "dotenv";
+dotenv.config();
 import Complaint from '../models/Complaint.js';
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import OpenAI from "openai";
 
-// AI Setup - Make sure process.env.GEMINI_API_KEY is correct in .env
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY
+});
 
 export const createComplaint = async (req, res) => {
+  try {
     const { title, description, category } = req.body;
     const studentId = req.user.id;
 
-    try {
-        // Fix: Use "gemini-1.5-flash" without any prefix
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    // 🔹 STRONG PROMPT (1 WORD ONLY)
+    const prompt = `
+Analyze this hostel complaint and return ONLY ONE WORD
+from this list: Low, Medium, High, Urgent.
 
-        const prompt = `Task: Analyze hostel complaint.
-        Return ONLY one word from this list: Low, Medium, High, Urgent.
-        Complaint: ${title} - ${description}`;
+Do not explain anything.
 
-        const result = await model.generateContent(prompt);
-        let aiPriority = result.response.text().trim();
+Title: ${title}
+Description: ${description}
+`;
 
-        const validPriorities = ['Low', 'Medium', 'High', 'Urgent'];
-        if (!validPriorities.includes(aiPriority)) {
-            aiPriority = validPriorities.find(p => aiPriority.includes(p)) || 'Low';
-        }
+    // 🔹 OpenAI Call
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        { role: "user", content: prompt }
+      ],
+      temperature: 0
+    });
 
-        const newComplaint = await Complaint.create({
-            student: studentId,
-            title,
-            description,
-            category,
-            priority: aiPriority
-        });
+    const aiPriority =
+      response.choices[0].message.content.trim();
 
-        res.status(201).json({
-            message: "Complaint registered with AI Priority! 🤖",
-            newComplaint
-        });
+    const newComplaint = await Complaint.create({
+      student: studentId,
+      title,
+      description,
+      category,
+      priority: aiPriority || "Low"
+    });
 
-    } catch (error) {
-        console.error("AI Error Details:", error.message);
+    res.status(201).json({
+      message: "Complaint registered with AI Priority!",
+      newComplaint
+    });
 
-        // 🛡️ BACKUP LOGIC: Agar AI fail ho jaye (Key issue ya Model issue)
-        let backupPriority = "Low";
-        const fullText = (title + " " + description).toLowerCase();
-
-        // Keywords for urgent situations
-        if (fullText.includes("short circuit") || fullText.includes("fire") || fullText.includes("smoke") || fullText.includes("sparks")) {
-            backupPriority = "Urgent";
-        } else if (fullText.includes("not working") || fullText.includes("broken") || fullText.includes("water leak")) {
-            backupPriority = "High";
-        }
-
-        const newComplaint = await Complaint.create({
-            student: studentId,
-            title,
-            description,
-            category,
-            priority: backupPriority
-        });
-
-        res.status(201).json({
-            message: "AI analysis failed, used Backup Logic to save complaint. ✅",
-            newComplaint
-        });
-    }
+  } catch (error) {
+    console.error("OPENAI ERROR:", error);
+    res.status(500).json({
+      message: "AI Analysis Failed",
+      error: error.message
+    });
+  }
 };
-
 
 
 // 1. Saari Complaints dekhna (Only for Warden/Admin)
