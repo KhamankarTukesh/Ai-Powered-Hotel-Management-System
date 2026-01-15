@@ -2,50 +2,75 @@ import bcrypt, { hash } from 'bcryptjs';
 import User from '../models/User.js';
 import jwt from 'jsonwebtoken';
 
-//1.Register User
+
+// registerUser ko update kar rahe hain
 export const registerUser = async (req, res) => {
     try {
-        const { fullName, email, password, role, studentDetails } = req.body;
-
+        const { fullName, email, password, rollNumber, department, phone } = req.body;
 
         const userExist = await User.findOne({ email });
-        if (userExist) {
-            return res.status(400).json({ message: "Email already registered!" });
-        }
+        if (userExist) return res.status(400).json({ message: "Email already registered!" });
 
-        if (role && (role === 'warden' || role === 'admin')) {
-            return res.status(403).json({
-                message: "Unauthorized! Only Students can register here. Staff accounts are created by the Administrator."
-            });
-        }
+        // 1. Generate 6-digit OTP
+        const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+        const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 min expiry
+
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
+        // 2. Naya User create karna (UI Fields ke saath)
         const newUser = new User({
             fullName,
             email,
             password: hashedPassword,
             role: 'student',
-            studentDetails,
-            isVerified: false
+            studentDetails: {
+                rollNumber,
+                department,
+                phone,
+                idCardImage: req.file ? req.file.path : "" // Multer se file path aayega
+            },
+            isVerified: false,
+            otp: {
+                code: otpCode,
+                expiresAt: otpExpires
+            }
         });
 
         await newUser.save();
+        console.log(`OTP for ${email} is: ${otpCode}`); // Testing ke liye console par
 
         res.status(201).json({
-            message: "Student Registration Successful! Please verify your account.",
-            user: {
-                id: newUser._id,
-                name: newUser.fullName,
-                email: newUser.email,
-                role: newUser.role
-            }
+            message: "Registration Successful! Please verify OTP sent to your email.",
+            userId: newUser._id
         });
     } catch (error) {
         res.status(500).json({ message: "Server Error", error: error.message });
     }
 };
 
+//  Verify OTP Function (Naya step)
+export const verifyOTP = async (req, res) => {
+    try {
+        const { email, code } = req.body;
+        const user = await User.findOne({ email });
+
+        if (!user) return res.status(404).json({ message: "User not found" });
+
+        if (user.otp.code === code && user.otp.expiresAt > Date.now()) {
+            user.isVerified = true;
+            user.otp.code = undefined; // Verify hone ke baad OTP hata do
+            user.otp.expiresAt = undefined;
+            await user.save();
+
+            res.status(200).json({ message: "Account verified successfully! 😊" });
+        } else {
+            res.status(400).json({ message: "Invalid or Expired OTP" });
+        }
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};
 
 //2.Login user
 export const loginUser = async (req, res) => {
