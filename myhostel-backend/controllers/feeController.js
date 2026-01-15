@@ -43,3 +43,14 @@ export const payFees = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
+
+// AI Function to calculate risk
+const calculatePaymentRisk = (attendanceRate, daysToDeadline, paidPercentage) => {
+    if (attendanceRate < 60 || (daysToDeadline < 3 && paidPercentage === 0)) {
+        return 'High';
+    } else if (attendanceRate < 75 || paidPercentage < 50) {
+        return 'Medium';
+    }
+    return 'Low';
+};
+
