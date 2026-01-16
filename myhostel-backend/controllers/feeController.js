@@ -54,3 +54,20 @@ const calculatePaymentRisk = (attendanceRate, daysToDeadline, paidPercentage) =>
     return 'Low';
 };
 
+
+export const getFeeAnalytics = async (req, res) => {
+    try {
+        const fees = await Fee.find().populate('student', 'fullName studentDetails');
+        
+        const analyzedFees = fees.map(fee => {
+            const risk = calculatePaymentRisk(80, 5, (fee.paidAmount/fee.totalAmount)*100);
+            return { ...fee._doc, aiRisk: risk };
+        });
+
+        res.status(200).json(analyzedFees);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+
