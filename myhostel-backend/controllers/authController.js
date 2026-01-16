@@ -59,10 +59,9 @@ export const verifyOTP = async (req, res) => {
 
         if (user.otp.code === code && user.otp.expiresAt > Date.now()) {
             user.isVerified = true;
-            user.otp.code = undefined; // Verify hone ke baad OTP hata do
+            user.otp.code = undefined;
             user.otp.expiresAt = undefined;
             await user.save();
-
             res.status(200).json({ message: "Account verified successfully! 😊" });
         } else {
             res.status(400).json({ message: "Invalid or Expired OTP" });
@@ -104,6 +103,60 @@ export const loginUser = async (req, res) => {
         });
     } catch (error) {
         res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};
+
+export const forgotPassword = async (req, res) => {
+    try {
+        const { email } = req.body;
+        const user = await User.findOne({ email });
+        if (!user) return res.status(404).json({ message: "User not found" });
+
+        const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+        user.otp = { code: otpCode, expiresAt: new Date(Date.now() + 10 * 60 * 1000) };
+        await user.save();
+
+        console.log(`Reset OTP for ${email}: ${otpCode}`);
+        res.status(200).json({ message: "Reset OTP sent to console/email" });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+export const resetPassword = async (req, res) => {
+    try {
+        const { email, code, newPassword } = req.body;
+        const user = await User.findOne({ email, "otp.code": code, "otp.expiresAt": { $gt: Date.now() } });
+
+        if (!user) return res.status(400).json({ message: "Invalid or expired OTP" });
+
+        const salt = await bcrypt.genSalt(10);
+        user.password = await bcrypt.hash(newPassword, salt);
+        user.otp = { code: undefined, expiresAt: undefined };
+        await user.save();
+
+        res.status(200).json({ message: "Password reset successful!" });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+
+export const updateProfile = async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id);
+        if (!user) return res.status(404).json({ message: "User not found" });
+
+        user.fullName = req.body.fullName || user.fullName;
+        if (user.role === 'student') {
+            user.studentDetails.phone = req.body.phone || user.studentDetails.phone;
+            user.studentDetails.department = req.body.department || user.studentDetails.department;
+        }
+
+        const updatedUser = await user.save();
+        res.status(200).json({ message: "Profile updated", user: updatedUser });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
 };
 

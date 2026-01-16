@@ -1,5 +1,5 @@
 import express from 'express';
-import { registerUser, loginUser, createStaff, verifyOTP } from '../controllers/authController.js';
+import { registerUser, loginUser, createStaff, verifyOTP,forgotPassword, resetPassword, updateProfile } from '../controllers/authController.js';
 import { protect, adminOnly } from '../middleware/authMiddleware.js';
 import multer from 'multer';
 import path from 'path'
@@ -34,11 +34,19 @@ const upload = multer({
 // 'idCardImage' wahi naam hai jo hum Postman ke body mein use karenge
 router.post('/register', upload.single('idCardImage'), registerUser);
 
+
 // 2. OTP Verification
 router.post('/verify-otp', verifyOTP);
 
 // 3. Login
 router.post('/login', loginUser);
+
+router.post('/forgot-password', forgotPassword);
+
+router.post('/reset-password', resetPassword);
+
+router.put('/update-profile', protect, updateProfile);
+
 
 // 4. Create Staff (Only Admin can do this)
 router.post('/create-staff', protect, adminOnly, createStaff);
