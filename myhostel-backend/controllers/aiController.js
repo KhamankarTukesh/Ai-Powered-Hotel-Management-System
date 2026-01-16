@@ -1,19 +1,31 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import OpenAI from "openai";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY
+});
 
 export const analyzeMessFeedback = async (req, res) => {
     try {
-        const { feedbackList } = req.body; // Students ke feedbacks ka array
+        const { feedbackList } = req.body;
 
-        const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+        if (!Array.isArray(feedbackList) || feedbackList.length === 0) {
+            return res.status(400).json({ error: "Feedback list is required" });
+        }
 
-        const prompt = `Analyze the following hostel mess feedback and give a summary in 2 lines. 
-        Tell me if students are happy or angry, and what is the main issue: ${feedbackList.join(", ")}`;
+        const prompt = `
+Analyze the following hostel mess feedback and give a summary in 2 lines.
+Tell me if students are happy or angry, and what is the main issue.
+Feedback:
+${feedbackList.join(", ")}
+        `;
 
-        const result = await model.generateContent(prompt);
-        const response = result.response;
-        const text = response.text();
+        const response = await openai.chat.completions.create({
+            model: "gpt-4o-mini",
+            messages: [{ role: "user", content: prompt }],
+            temperature: 0.3
+        });
+
+        const text = response.choices[0].message.content;
 
         res.status(200).json({ aiInsight: text });
     } catch (error) {

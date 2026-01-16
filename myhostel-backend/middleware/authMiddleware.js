@@ -18,10 +18,14 @@ export const protect = async (req, res, next) => {
 
 //Only Admin check
 
+// middleware/authMiddleware.js
+
 export const adminOnly = (req, res, next) => {
-    if (req.user && req.user.role === 'admin'|| req.user.role === 'warden') {
+    if (req.user && (req.user.role === 'admin' || req.user.role === 'warden')) {
         next();
     } else {
-        res.status(403).json({ message: "Access denied: Only Admin can perform this action" });
+        res.status(403).json({ 
+            message: "Access denied: Only Admin or Warden can perform this action" 
+        });
     }
 };
