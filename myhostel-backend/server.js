@@ -12,6 +12,7 @@ import complaintRoutes from './routes/complaintRoutes.js';
 import leaveRoutes from './routes/leaveRoutes.js';
 import attendanceRoutes from './routes/attendanceRoutes.js';
 import aiRoutes from './routes/aiRoutes.js';
+import adminRoutes from './routes/adminRoutes.js';
 
 
 
@@ -27,6 +28,8 @@ app.use('/api/complaints',complaintRoutes);
 app.use('/api/leaves',leaveRoutes);
 app.use('/api/attendance', attendanceRoutes);
 app.use('/api/ai',aiRoutes);
+app.use('/api/admin',adminRoutes);
+
 
 
 mongoose.connect(process.env.MONGO_URI)

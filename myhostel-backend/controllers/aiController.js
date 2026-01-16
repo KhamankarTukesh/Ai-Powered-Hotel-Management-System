@@ -12,12 +12,15 @@ export const analyzeMessFeedback = async (req, res) => {
             return res.status(400).json({ error: "Feedback list is required" });
         }
 
+
         const prompt = `
-Analyze the following hostel mess feedback and give a summary in 2 lines.
-Tell me if students are happy or angry, and what is the main issue.
-Feedback:
-${feedbackList.join(", ")}
-        `;
+            Analyze these hostel complaints and categorize them for the Warden:
+            Complaints: ${feedbackTexts.join(", ")}
+
+            Task: 
+            1. Identify if there are any immediate safety risks (like fire, sparks,Water Leakage, or medical).
+            2. Summarize the overall maintenance mood.
+            3. If there is an 'Urgent' issue like sparks or smoke, start the response with "🚨 RED ALERT:".`;
 
         const response = await openai.chat.completions.create({
             model: "gpt-4o-mini",
