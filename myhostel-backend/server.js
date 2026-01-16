@@ -10,6 +10,8 @@ import authRoutes from './routes/authRoutes.js';
 import roomRoutes from './routes/roomRoutes.js';
 import complaintRoutes from './routes/complaintRoutes.js';
 import leaveRoutes from './routes/leaveRoutes.js';
+import attendanceRoutes from './routes/attendanceRoutes.js';
+import aiRoutes from './routes/aiRoutes.js';
 
 
 
@@ -23,6 +25,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/rooms', roomRoutes);
 app.use('/api/complaints',complaintRoutes);
 app.use('/api/leaves',leaveRoutes);
+app.use('/api/attendance', attendanceRoutes);
+app.use('/api/ai',aiRoutes);
 
 
 mongoose.connect(process.env.MONGO_URI)
