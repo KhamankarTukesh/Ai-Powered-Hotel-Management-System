@@ -1,17 +1,27 @@
 import Room from "../models/Room.js";
 
+// 1. ADD ROOM (Updated with Block, Floor and Auto-Bed Creation)
 export const addRoom = async (req, res) => {
     try {
-        const { roomNumber, type, capacity, price } = req.body;
+        const { roomNumber, type, capacity, price, block, floor } = req.body;
 
         const roomExists = await Room.findOne({ roomNumber });
         if (roomExists) return res.status(400).json({ message: "Room already exists" });
+
+        // Logic: Jitni capacity hai, utne beds array mein auto-create kar do
+        const beds = Array.from({ length: capacity }, (_, i) => ({
+            bedNumber: String.fromCharCode(65 + i), // A, B, C...
+            isOccupied: false
+        }));
 
         const newRoom = await Room.create({
             roomNumber,
             type,
             capacity,
-            price
+            price,
+            block,
+            floor,
+            beds
         });
         res.status(201).json(newRoom);
     } catch (error) {
@@ -19,13 +29,12 @@ export const addRoom = async (req, res) => {
     }
 };
 
-// Saare Rooms Dekhna (With Student Details)
+// 2. GET ALL ROOMS (With Populated Student Data)
 export const getAllRooms = async (req, res) => {
     try {
-        // .populate 'occupants' field ko real user data se bhar dega
         const rooms = await Room.find().populate({
-            path: 'occupants',
-            select: 'fullName studentDetails.rollNumber studentDetails.department' 
+            path: 'beds.studentId', // Naya path kyunki beds array ke andar hai
+            select: 'fullName email studentDetails.rollNumber studentDetails.department' 
         });
         res.status(200).json(rooms);
     } catch (error) {
@@ -33,36 +42,37 @@ export const getAllRooms = async (req, res) => {
     }
 };
 
-
-// 3. STUDENT KO ROOM ASSIGN KARNA (Only Warden/Admin)
+// 3. ALLOCATE ROOM (Bed-wise Logic)
 export const allocateRoom = async (req, res) => {
     try {
-        const { roomId, studentId } = req.body;
+        const { roomId, studentId, bedNumber } = req.body; // BedNumber optional rakhte hain
 
-        // 1. Check karein kya room exists karta hai
         const room = await Room.findById(roomId);
         if (!room) return res.status(404).json({ message: "Room Not found" });
 
-        // 2. Check capacity (Kya jagah hai?)
-        if (room.occupants.length >= room.capacity) {
-            return res.status(400).json({ message: "Room is already full!" });
-        }
-
-        const alreadyAssigned = await Room.findOne({ occupants: studentId });
+        // Check if student already has any room
+        const alreadyAssigned = await Room.findOne({ "beds.studentId": studentId });
         if (alreadyAssigned) {
-            return res.status(400).json({ message: "Student already has a room assigned" })
+            return res.status(400).json({ message: "Student already has a room assigned" });
         }
 
-
-        // 4. Room mein student add karein
-        room.occupants.push(studentId);
-
-        //5.Agar Room full ho gaya status badal kr ye kardo
-        if (room.occupants.length === room.capacity) {
-            room.status = 'Full';
+        // Khali bed dhoondo
+        let targetBed;
+        if (bedNumber) {
+            targetBed = room.beds.find(b => b.bedNumber === bedNumber && !b.isOccupied);
+        } else {
+            targetBed = room.beds.find(b => !b.isOccupied);
         }
 
-        await room.save();
+        if (!targetBed) return res.status(400).json({ message: "No available beds in this room!" });
+
+        // Bed Assign karo
+        targetBed.studentId = studentId;
+        targetBed.isOccupied = true;
+
+        await room.save(); // Pre-save hook apne aap status 'Full' kar dega agar capacity bhar gayi
+        
+        console.log(`Alert: Bed ${targetBed.bedNumber} in Room ${room.roomNumber} allocated!`);
         res.status(200).json({ message: "Room allocated successfully", room });
 
     } catch (error) {
