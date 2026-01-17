@@ -141,25 +141,44 @@ export const resetPassword = async (req, res) => {
     }
 };
 
-
 export const updateProfile = async (req, res) => {
     try {
         const user = await User.findById(req.user.id);
         if (!user) return res.status(404).json({ message: "User not found" });
 
+        // Basic Info Update
         user.fullName = req.body.fullName || user.fullName;
+
         if (user.role === 'student') {
-            user.studentDetails.phone = req.body.phone || user.studentDetails.phone;
-            user.studentDetails.department = req.body.department || user.studentDetails.department;
+            // Student Academic & Contact Details
+            // Hum spread operator (...) use kar rahe hain taaki purana data delete na ho
+            user.studentDetails = {
+                ...user.studentDetails,
+                phone: req.body.phone || user.studentDetails.phone,
+                department: req.body.department || user.studentDetails.department,
+                course: req.body.course || user.studentDetails.course,
+                batch: req.body.batch || user.studentDetails.batch,
+                currentYear: req.body.currentYear || user.studentDetails.currentYear
+            };
+
+            // Parent/Guardian Details (Naya logic add kiya)
+            if (req.body.parentDetails) {
+                user.parentDetails = {
+                    ...user.parentDetails,
+                    guardianName: req.body.parentDetails.guardianName || user.parentDetails.guardianName,
+                    guardianContact: req.body.parentDetails.guardianContact || user.parentDetails.guardianContact,
+                    relation: req.body.parentDetails.relation || user.parentDetails.relation,
+                    address: req.body.parentDetails.address || user.parentDetails.address
+                };
+            }
         }
 
         const updatedUser = await user.save();
-        res.status(200).json({ message: "Profile updated", user: updatedUser });
+        res.status(200).json({ message: "Profile updated successfully! ✅", user: updatedUser });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 };
-
 // 3. CREATE STAFF (By Admin Only)
 export const createStaff = async (req, res) => {
     try {
