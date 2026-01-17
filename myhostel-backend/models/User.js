@@ -1,42 +1,51 @@
-import mongoose, { Schema } from "mongoose";
-
+import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema({
     fullName: {
-        type:String,
+        type: String,
         required: true,
-        trim:true
+        trim: true
     },
     email: {
-        type:String,
-        required:true,
+        type: String,
+        required: true,
         unique: true,
         lowercase: true
     },
     password: {
-        type:String,
-        required:true
+        type: String,
+        required: true
     },
     role: {
-        type:String,
-        enum: ['student','warden','admin'],
+        type: String,
+        enum: ['student', 'warden', 'admin'],
         default: 'student'
     },
+    // Student Details: Academic + Contact
     studentDetails: {
         rollNumber: String,
         department: String,
         phone: String,
-        idCardImage: String
+        idCardImage: String, 
+        course: String,      
+        batch: String,       
+        currentYear: Number  
+    },
+    parentDetails: {
+        guardianName: String,
+        guardianContact: String,
+        relation: String,    
+        address: String
     },
     isVerified: {
         type: Boolean,
         default: false
     },
-otp: {
+    otp: {
         code: String,
         expiresAt: Date
     }
-}, { timestamps: true});
+}, { timestamps: true });
 
-const User = new mongoose.model('User',userSchema);
+const User = mongoose.model('User', userSchema);
 export default User;
