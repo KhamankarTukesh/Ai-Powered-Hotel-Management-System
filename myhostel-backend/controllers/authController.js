@@ -1,6 +1,7 @@
 import bcrypt, { hash } from 'bcryptjs';
 import User from '../models/User.js';
 import jwt from 'jsonwebtoken';
+import ActivityLog from "../models/ActivityLog.js";
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -183,7 +184,16 @@ export const updateProfile = async (req, res) => {
         }
 
         const updatedUser = await user.save();
-        res.status(200).json({ message: "Profile updated successfully! ☁️", user: updatedUser });
+
+
+await ActivityLog.create({
+    student: user._id,
+    action: 'Profile-Update',
+    description: `${user.fullName} updated their profile and documents.`
+});
+
+
+res.status(200).json({ message: "Profile updated successfuly and activity logged!", user: updatedUser });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

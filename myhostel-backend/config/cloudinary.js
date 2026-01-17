@@ -15,4 +15,17 @@ const storage = new CloudinaryStorage({
     },
 });
 
+export const uploadPDFToCloudinary = (fileBuffer) => {
+    return new Promise((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+            { resource_type: "raw", folder: "Hostel_Outpasses" },
+            (error, result) => {
+                if (error) reject(error);
+                else resolve(result);
+            }
+        );
+        uploadStream.end(fileBuffer);
+    });
+};
+
 export { cloudinary, storage };
