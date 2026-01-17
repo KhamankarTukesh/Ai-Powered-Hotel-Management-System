@@ -2,7 +2,7 @@ import express from 'express';
 import { registerUser, loginUser, createStaff, verifyOTP, forgotPassword, resetPassword, updateProfile } from '../controllers/authController.js';
 import { protect, adminOnly } from '../middleware/authMiddleware.js';
 import multer from 'multer';
-// Import karein jo humne config banaya tha
+
 import { storage } from '../config/cloudinary.js'; 
 
 const router = express.Router();

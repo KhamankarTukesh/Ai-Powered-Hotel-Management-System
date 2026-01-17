@@ -13,6 +13,7 @@ import leaveRoutes from './routes/leaveRoutes.js';
 import attendanceRoutes from './routes/attendanceRoutes.js';
 import aiRoutes from './routes/aiRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
+import noticeRoutes from './routes/noticeRoutes.js';
 
 
 
@@ -29,6 +30,7 @@ app.use('/api/leaves',leaveRoutes);
 app.use('/api/attendance', attendanceRoutes);
 app.use('/api/ai',aiRoutes);
 app.use('/api/admin',adminRoutes);
+app.use('/api/notice',noticeRoutes);
 
 
 

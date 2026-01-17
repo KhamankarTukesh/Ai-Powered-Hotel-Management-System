@@ -60,34 +60,48 @@ Description: ${description}
 
 // 1. Saari Complaints dekhna (Only for Warden/Admin)
 export const getAllComplaints = async (req, res) => {
-    try {
-        // Sort: Urgent/High pehle dikhegi, phir baki
-        const complaints = await Complaint.find()
-            .populate('student', 'fullName')
-            .sort({ createdAt: -1 }); // Nayi shikayaten upar
+  try {
+    // Sort: Urgent/High pehle dikhegi, phir baki
+    const complaints = await Complaint.find()
+      .populate('student', 'fullName')
+      .sort({ createdAt: -1 }); // Nayi shikayaten upar
 
-        res.status(200).json(complaints);
-    } catch (error) {
-        res.status(500).json({ message: "Error fetching complaints", error: error.message });
-    }
+    res.status(200).json(complaints);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching complaints", error: error.message });
+  }
 };
 
-// 2. Complaint Status badalna (Resolve karna)
 export const updateComplaintStatus = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { status } = req.body; // Status: 'In Progress' ya 'Resolved'
+  try {
+    const { id } = req.params;
+    const { status, assignedStaff } = req.body;
 
-        const updatedComplaint = await Complaint.findByIdAndUpdate(
-            id, 
-            { status }, 
-            { new: true }
-        );
+    const complaint = await Complaint.findById(id);
+    if (!complaint) return res.status(404).json({ message: "Complaint not found" });
 
-        if (!updatedComplaint) return res.status(404).json({ message: "Complaint not found" });
+    complaint.status = status || complaint.status;
+    complaint.assignedStaff = assignedStaff || complaint.assignedStaff;
 
-        res.status(200).json({ message: "Status updated!", updatedComplaint });
-    } catch (error) {
-        res.status(500).json({ message: "Error updating status", error: error.message });
-    }
+
+if (status === 'Resolved') {
+    complaint.resolvedAt = Date.now();
+    
+    const createdAt = new Date(complaint.createdAt);
+    const resolvedAt = new Date(complaint.resolvedAt);
+    
+    
+    const diffInMs = resolvedAt - createdAt;
+    const diffInHours = (diffInMs / (1000 * 60 * 60)).toFixed(2);
+    complaint.resolutionTime = `${diffInHours} hours`;
+}
+    await complaint.save();
+
+    res.status(200).json({
+      message: "Complaint updated successfully!",
+      complaint
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 };

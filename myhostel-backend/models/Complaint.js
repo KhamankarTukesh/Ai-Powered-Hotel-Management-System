@@ -8,7 +8,7 @@ const complaintSchema = new mongoose.Schema({
         required: true
     },
     title: {
-        type:String,
+        type: String,
         required: true
     },
     description: {
@@ -17,20 +17,23 @@ const complaintSchema = new mongoose.Schema({
     },
     category: {
         type: String,
-        enum: ['Electrical','Plumbing','Cleaning','Mess','Other'],
+        enum: ['Electrical', 'Plumbing', 'Cleaning', 'Mess', 'Other'],
         required: true
     },
     priority: {
         type: String,
-        enum: ['Low','Medium','High','Urgent'],
+        enum: ['Low', 'Medium', 'High', 'Urgent'],
         required: true
     },
     status: {
         type: String,
-        enum: ['Pending','In Progress','Resolved'],
+        enum: ['Pending', 'In Progress', 'Resolved'],
         default: 'Pending'
-    }
-},{ timestamps: true });
+    },
+    assignedStaff: { type: String, default: "Not Assigned" },
+    resolutionTime: { type: String },
+
+}, { timestamps: true });
 
 const Complaint = mongoose.model('Complaint', complaintSchema);
 export default Complaint;
