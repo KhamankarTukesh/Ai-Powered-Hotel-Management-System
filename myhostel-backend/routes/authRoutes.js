@@ -1,54 +1,29 @@
 import express from 'express';
-import { registerUser, loginUser, createStaff, verifyOTP,forgotPassword, resetPassword, updateProfile } from '../controllers/authController.js';
+import { registerUser, loginUser, createStaff, verifyOTP, forgotPassword, resetPassword, updateProfile } from '../controllers/authController.js';
 import { protect, adminOnly } from '../middleware/authMiddleware.js';
 import multer from 'multer';
-import path from 'path'
+// Import karein jo humne config banaya tha
+import { storage } from '../config/cloudinary.js'; 
 
 const router = express.Router();
 
 
-// --- Multer Configuration (ID Card Upload ke liye) ---
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, 'uploads/id_cards/');
-    },
-    filename: (req, file, cb) => {
-        cb(null, `${Date.now()}-${file.originalname}`);
-    }
-});
-
-const upload = multer({ 
-    storage,
-    fileFilter: (req, file, cb) => {
-        const fileTypes = /jpeg|jpg|png|pdf/;
-        const extname = fileTypes.test(path.extname(file.originalname).toLowerCase());
-        if (extname) return cb(null, true);
-        cb(new Error('Only Images or PDFs allowed!'));
-    }
-});
+const upload = multer({ storage: storage });
 
 
-// --- Auth Routes ---
 
-// 1. Student Registration (With ID Card Upload)
-// 'idCardImage' wahi naam hai jo hum Postman ke body mein use karenge
+// Registration mein image upload logic
 router.post('/register', upload.single('idCardImage'), registerUser);
 
+// Profile Update mein bhi image upload add karein
+// TAAKI STUDENT BAAD MEIN BHI ID UPLOAD KAR SAKE
+router.put('/update-profile', protect, upload.single('idCardImage'), updateProfile);
 
-// 2. OTP Verification
+// Baki routes same rahenge...
 router.post('/verify-otp', verifyOTP);
-
-// 3. Login
 router.post('/login', loginUser);
-
 router.post('/forgot-password', forgotPassword);
-
 router.post('/reset-password', resetPassword);
-
-router.put('/update-profile', protect, updateProfile);
-
-
-// 4. Create Staff (Only Admin can do this)
 router.post('/create-staff', protect, adminOnly, createStaff);
 
 export default router;

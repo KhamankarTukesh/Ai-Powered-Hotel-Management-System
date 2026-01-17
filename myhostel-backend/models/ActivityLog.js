@@ -3,19 +3,19 @@ import mongoose from "mongoose";
 const activityLogSchema = new mongoose.Schema({
     student: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
+        ref: 'User', // User model se link
         required: true
     },
     action: {
         type: String, 
-        enum: ['Check-in', 'Check-out', 'Room-Allocated', 'Room-Changed'],
+        enum: ['Check-in', 'Check-out', 'Profile-Update', 'Room-Allocated'],
         required: true
     },
-    description: String, // e.g., "Shifted from Room 102 to 101"
+    description: String,
     timestamp: {
         type: Date,
         default: Date.now
     }
-});
+}, { timestamps: true });
 
 export default mongoose.model('ActivityLog', activityLogSchema);

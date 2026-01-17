@@ -1,6 +1,8 @@
 import bcrypt, { hash } from 'bcryptjs';
 import User from '../models/User.js';
 import jwt from 'jsonwebtoken';
+import dotenv from "dotenv";
+dotenv.config();
 
 
 // registerUser ko update kar rahe hain
@@ -18,17 +20,23 @@ export const registerUser = async (req, res) => {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
-        // 2. Naya User create karna (UI Fields ke saath)
-        const newUser = new User({
+const newUser = new User({
             fullName,
             email,
             password: hashedPassword,
             role: 'student',
             studentDetails: {
-                rollNumber,
-                department,
-                phone,
-                idCardImage: req.file ? req.file.path : "" // Multer se file path aayega
+                rollNumber: rollNumber || "",
+                department: department || "",
+                phone: phone || "",
+                idCardImage: req.file ? req.file.path : "" 
+            },
+            // Khali object initialize kar do taaki baad mein update ho sake
+            parentDetails: {
+                guardianName: "",
+                guardianContact: "",
+                relation: "",
+                address: ""
             },
             isVerified: false,
             otp: {
@@ -146,22 +154,23 @@ export const updateProfile = async (req, res) => {
         const user = await User.findById(req.user.id);
         if (!user) return res.status(404).json({ message: "User not found" });
 
-        // Basic Info Update
+        // AGAR FILE AAYI HAI TOH CLOUDINARY URL SAVE KARO
+        if (req.file) {
+            user.studentDetails.idCardImage = req.file.path; 
+        }
+
         user.fullName = req.body.fullName || user.fullName;
 
         if (user.role === 'student') {
-            // Student Academic & Contact Details
-            // Hum spread operator (...) use kar rahe hain taaki purana data delete na ho
             user.studentDetails = {
                 ...user.studentDetails,
                 phone: req.body.phone || user.studentDetails.phone,
                 department: req.body.department || user.studentDetails.department,
                 course: req.body.course || user.studentDetails.course,
                 batch: req.body.batch || user.studentDetails.batch,
-                currentYear: req.body.currentYear || user.studentDetails.currentYear
             };
 
-            // Parent/Guardian Details (Naya logic add kiya)
+            // Parent details handle karein
             if (req.body.parentDetails) {
                 user.parentDetails = {
                     ...user.parentDetails,
@@ -174,7 +183,7 @@ export const updateProfile = async (req, res) => {
         }
 
         const updatedUser = await user.save();
-        res.status(200).json({ message: "Profile updated successfully! ✅", user: updatedUser });
+        res.status(200).json({ message: "Profile updated successfully! ☁️", user: updatedUser });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
