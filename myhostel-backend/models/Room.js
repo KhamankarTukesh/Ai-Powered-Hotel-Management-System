@@ -48,15 +48,17 @@ const roomSchema = new mongoose.Schema({
     }
 }, { timestamps: true });
 
-// Pre-save hook to auto-update status based on beds
-roomSchema.pre('save', function(next) {
-    const occupiedBeds = this.beds.filter(bed => bed.isOccupied).length;
-    if (occupiedBeds >= this.capacity) {
-        this.status = 'Full';
-    } else if (this.status !== 'Under Maintenance') {
-        this.status = 'Available';
+
+// models/Room.js
+roomSchema.pre('save', function (next) {
+    if (this.beds) {
+        const occupiedBeds = this.beds.filter(bed => bed.isOccupied).length;
+        if (occupiedBeds >= this.capacity) {
+            this.status = 'Full';
+        } else if (this.status !== 'Under Maintenance') {
+            this.status = 'Available';
+        }
     }
-    next();
 });
 
 const Room = mongoose.model('Room', roomSchema);

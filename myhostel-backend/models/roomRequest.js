@@ -11,7 +11,7 @@ const roomRequestSchema = new mongoose.Schema({
         ref: 'Room',
         required: true
     },
-    desireRoom:{
+    desiredRoom:{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Room',
         required: true
