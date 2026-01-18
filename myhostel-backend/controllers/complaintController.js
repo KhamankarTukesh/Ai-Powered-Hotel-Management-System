@@ -107,6 +107,8 @@ if (status === 'Resolved') {
 };
 
 
+// controllers/complaintController.js
+
 export const assignComplaint = async (req, res) => {
     try {
         const { complaintId, staffId } = req.body;
@@ -114,14 +116,30 @@ export const assignComplaint = async (req, res) => {
         const complaint = await Complaint.findByIdAndUpdate(
             complaintId,
             { 
-                assignedTo: staffId, 
+                assignedTo: staffId, // Asli ID yahan ja rahi hai
                 status: 'In Progress',
                 updatedAt: Date.now() 
             },
             { new: true }
         ).populate('assignedTo', 'fullName staffDetails');
 
-        res.status(200).json({ message: "Task assigned to staff! 👷‍♂️", complaint });
+        res.status(200).json({ 
+            message: "Task assigned to staff! 👷‍♂️", 
+            complaint 
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+export const getComplaintById = async (req, res) => {
+    try {
+        const complaint = await Complaint.findById(req.params.id)
+            .populate('student', 'fullName roomNumber')
+            .populate('assignedTo', 'fullName staffDetails');
+        
+        if (!complaint) return res.status(404).json({ message: "Complaint not found" });
+        res.status(200).json(complaint);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

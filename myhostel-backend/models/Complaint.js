@@ -32,6 +32,7 @@ const complaintSchema = new mongoose.Schema({
     },
     assignedStaff: { type: String, default: "Not Assigned" },
     resolutionTime: { type: String },
+    assignedTo: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
 
 }, { timestamps: true });
 

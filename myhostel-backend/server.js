@@ -17,6 +17,7 @@ import noticeRoutes from './routes/noticeRoutes.js';
 import gateRoutes from './routes/gatePassRoutes.js';
 import feeRoutes from './routes/feeRoutes.js';
 import messRoutes from './routes/messRoutes.js';
+import initCronJobs from './utils/cronJobs.js';
 
 
 
@@ -47,6 +48,8 @@ mongoose.connect(process.env.MONGO_URI)
 app.get('/',(req,res) =>{
     res.send('MyHostel Global API is running in ES Module mode 🚀...');
 });
+
+initCronJobs();
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

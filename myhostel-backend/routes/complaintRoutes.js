@@ -1,17 +1,23 @@
 import express from 'express';
-import { createComplaint, getAllComplaints, updateComplaintStatus, assignComplaint } from '../controllers/complaintController.js';
-import { protect, adminOnly } from '../middleware/authMiddleware.js'; // Warden/Admin ke liye logic
+import { 
+    createComplaint, 
+    getAllComplaints, 
+    updateComplaintStatus, // Ab ye use hoga
+    assignComplaint,
+    getComplaintById 
+} from '../controllers/complaintController.js';
+import { protect, adminOnly } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
-// Student: Complaint create karega
 router.post('/', protect, createComplaint);
-
-// Warden: Saari complaints dekhega
 router.get('/all', protect, getAllComplaints);
 
-// Warden: Status update karega
-router.put('/:id', protect, updateComplaintStatus);
-router.put('/assign', protect, adminOnly, assignComplaint);
+
+router.put('/assign', protect, adminOnly, assignComplaint); 
+
+
+router.get('/:id', protect, getComplaintById);
+router.put('/:id/status', protect, updateComplaintStatus); // Naya route status update ke liye
 
 export default router;
