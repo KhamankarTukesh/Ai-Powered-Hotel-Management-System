@@ -14,10 +14,10 @@ export const getDashboardSummary = async (req, res) => {
         
         // 2. Fee Data (Financial Health)
         const pendingFees = await Fee.find({ status: 'Pending' }).populate('student', 'name');
-        const feeSummary = pendingFees.map(f => `${f.student.name}: ₹${f.amount}`).join(", ");
+        const feeSummary = pendingFees.map(f => `${f.student.fullName}: ₹${f.amount}`).join(", ");
 
         // 3. Attendance Data (Today's Trend)
-        const today = new Date().setHours(0, 0, 0, 0);
+        const today = new Date(); today.setHours(0, 0, 0, 0);
         const todayAttendance = await Attendance.find({ date: { $gte: today } });
         const presentCount = todayAttendance.filter(a => a.status === 'Present').length;
         const absentCount = todayAttendance.filter(a => a.status === 'Absent').length;

@@ -14,6 +14,7 @@ import attendanceRoutes from './routes/attendanceRoutes.js';
 import aiRoutes from './routes/aiRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import noticeRoutes from './routes/noticeRoutes.js';
+import gateRoutes from './routes/gatePassRoutes.js';
 
 
 
@@ -31,6 +32,7 @@ app.use('/api/attendance', attendanceRoutes);
 app.use('/api/ai',aiRoutes);
 app.use('/api/admin',adminRoutes);
 app.use('/api/notice',noticeRoutes);
+app.use('/api/gatepass',gateRoutes);
 
 
 
