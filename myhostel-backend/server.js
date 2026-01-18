@@ -15,6 +15,8 @@ import aiRoutes from './routes/aiRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import noticeRoutes from './routes/noticeRoutes.js';
 import gateRoutes from './routes/gatePassRoutes.js';
+import feeRoutes from './routes/feeRoutes.js';
+import messRoutes from './routes/messRoutes.js';
 
 
 
@@ -33,6 +35,8 @@ app.use('/api/ai',aiRoutes);
 app.use('/api/admin',adminRoutes);
 app.use('/api/notice',noticeRoutes);
 app.use('/api/gatepass',gateRoutes);
+app.use('/api/fee/',feeRoutes);
+app.use('/api/mess', messRoutes);
 
 
 

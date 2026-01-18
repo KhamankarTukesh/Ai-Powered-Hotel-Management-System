@@ -11,7 +11,7 @@ const feeSchema = new mongoose.Schema({
     dueDate: { type: Date, required: true },
     status: { 
         type: String, 
-        enum: ['Paid', 'Partially Paid', 'Unpaid'], 
+        enum: ['Paid', 'Partially Paid', 'Unpaid','Pending Verification'], 
         default: 'Unpaid' 
     },
     transactions: [{
@@ -25,7 +25,9 @@ const feeSchema = new mongoose.Schema({
         type: String, 
         enum: ['Low', 'Medium', 'High'], 
         default: 'Low' 
-    }
+    },
+    hostelRent: { type: Number, required: true },
+    messCharges: { type: Number, required: true },
 }, { timestamps: true });
 
 export default mongoose.model('Fee', feeSchema);
