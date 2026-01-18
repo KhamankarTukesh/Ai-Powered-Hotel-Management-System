@@ -105,3 +105,24 @@ if (status === 'Resolved') {
     res.status(500).json({ error: error.message });
   }
 };
+
+
+export const assignComplaint = async (req, res) => {
+    try {
+        const { complaintId, staffId } = req.body;
+        
+        const complaint = await Complaint.findByIdAndUpdate(
+            complaintId,
+            { 
+                assignedTo: staffId, 
+                status: 'In Progress',
+                updatedAt: Date.now() 
+            },
+            { new: true }
+        ).populate('assignedTo', 'fullName staffDetails');
+
+        res.status(200).json({ message: "Task assigned to staff! 👷‍♂️", complaint });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};

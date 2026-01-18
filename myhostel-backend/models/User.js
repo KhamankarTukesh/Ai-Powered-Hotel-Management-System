@@ -18,7 +18,7 @@ const userSchema = new mongoose.Schema({
     },
     role: {
         type: String,
-        enum: ['student', 'warden', 'admin'],
+        enum: ['student', 'warden', 'admin', 'staff'],
         default: 'student'
     },
     // Student Details: Academic + Contact
@@ -26,16 +26,26 @@ const userSchema = new mongoose.Schema({
         rollNumber: String,
         department: String,
         phone: String,
-        idCardImage: String, 
-        course: String,      
-        batch: String,       
-        currentYear: Number  
+        idCardImage: String,
+        course: String,
+        batch: String,
+        currentYear: Number
     },
     parentDetails: {
         guardianName: String,
         guardianContact: String,
-        relation: String,    
+        relation: String,
         address: String
+    },
+    staffDetails: {
+        category: { 
+            type: String, 
+            enum: ['Electrician', 'Plumber', 'Cleaner', 'Security', 'Mess-Chef'] 
+        },
+        isAvailable: { 
+            type: Boolean, 
+            default: true 
+        }
     },
     isVerified: {
         type: Boolean,

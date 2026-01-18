@@ -54,3 +54,22 @@ export const deleteNotice = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
+
+
+export const sendEmergencyAlert = async (req, res) => {
+    try {
+        const { title, message } = req.body;
+
+        const alert = await Notice.create({
+            title: `🚨 EMERGENCY: ${title}`,
+            content: message,
+            isEmergency: true, // Schema mein ye field add kar dena
+            createdBy: req.user.id
+        });
+
+        // Yahan aap Nodemailer use karke sabko ek saath Email bhi bhej sakte ho
+        res.status(201).json({ message: "Emergency Alert Broadcasted! 📣", alert });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};

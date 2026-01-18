@@ -1,5 +1,5 @@
 import express from 'express';
-import { createComplaint, getAllComplaints, updateComplaintStatus } from '../controllers/complaintController.js';
+import { createComplaint, getAllComplaints, updateComplaintStatus, assignComplaint } from '../controllers/complaintController.js';
 import { protect, adminOnly } from '../middleware/authMiddleware.js'; // Warden/Admin ke liye logic
 
 const router = express.Router();
@@ -12,5 +12,6 @@ router.get('/all', protect, getAllComplaints);
 
 // Warden: Status update karega
 router.put('/:id', protect, updateComplaintStatus);
+router.put('/assign', protect, adminOnly, assignComplaint);
 
 export default router;

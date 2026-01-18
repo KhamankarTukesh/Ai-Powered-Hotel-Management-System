@@ -1,5 +1,5 @@
 import express from 'express';
-import { postNotice, deleteNotice } from '../controllers/noticeController.js';
+import { postNotice, deleteNotice,sendEmergencyAlert } from '../controllers/noticeController.js';
 import Notice from '../models/Notice.js';
 import { protect, adminOnly } from '../middleware/authMiddleware.js';
 import multer from 'multer';
@@ -12,6 +12,7 @@ router.delete('/delete/:id', protect, adminOnly, deleteNotice);
 
 router.post('/create', protect, adminOnly, upload.single('attachment'), postNotice);
 
+router.post('/emergency', protect, adminOnly, sendEmergencyAlert);
 
 router.get('/all', protect, async (req, res) => {
     const notices = await Notice.find().sort({ createdAt: -1 }).populate('postedBy', 'fullName');
