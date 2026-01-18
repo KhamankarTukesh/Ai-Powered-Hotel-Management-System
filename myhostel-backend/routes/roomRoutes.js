@@ -1,4 +1,5 @@
 import express from 'express';
+import { protect, adminOnly } from '../middleware/authMiddleware.js';
 import { 
     requestRoomChange, 
     approveRoomChange,
@@ -6,14 +7,14 @@ import {
     allocateRoom,
     getAllRooms
 } from '../controllers/roomController.js';
-import { protect, adminOnly } from '../middleware/authMiddleware.js';
+
 const router = express.Router();
 
 router.post('/',protect, adminOnly,addRoom);
 
 router.get("/",protect, getAllRooms);
 
-router.put("/allocate", protect, allocateRoom);
+router.put("/allocate", protect, adminOnly, allocateRoom);
 
 router.post('/request-change', protect, requestRoomChange);
 

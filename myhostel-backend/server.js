@@ -18,6 +18,7 @@ import gateRoutes from './routes/gatePassRoutes.js';
 import feeRoutes from './routes/feeRoutes.js';
 import messRoutes from './routes/messRoutes.js';
 import initCronJobs from './utils/cronJobs.js';
+import activityRoutes from './routes/activityRoutes.js';
 
 
 
@@ -38,6 +39,7 @@ app.use('/api/notice',noticeRoutes);
 app.use('/api/gatepass',gateRoutes);
 app.use('/api/fee/',feeRoutes);
 app.use('/api/mess', messRoutes);
+app.use('/api/activities', activityRoutes);
 
 
 

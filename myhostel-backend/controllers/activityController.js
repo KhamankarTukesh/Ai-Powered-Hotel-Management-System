@@ -2,7 +2,10 @@ import ActivityLog from "../models/ActivityLog.js";
 
 export const getStudentActivities = async (req, res) => {
     try {
-        const history = await ActivityLog.find({ student: req.params.studentId })
+        const targetStudent = req.params.studentId || req.user.id;
+
+        const history = await ActivityLog.find({ student: targetStudent })
+                                         .populate('student', 'fullName roomNumber') // Detail dikhane ke liye
                                          .sort({ timestamp: -1 }); 
         
         res.status(200).json(history);
