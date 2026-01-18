@@ -3,13 +3,13 @@ import OpenAI from 'openai'; // Official Library
 
 // OpenAI Config
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY, // Aapki .env wali key yahan use ho rahi hai
+    apiKey: process.env.OPENAI_API_KEY, // Aapki .env wali key yahan use ho rahi hai
 });
 
 // 1. Mark Meal Attendance (Same as before)
 export const markMeal = async (req, res) => {
     try {
-        const { mealType } = req.body; 
+        const { mealType } = req.body;
         const today = new Date().toISOString().split('T')[0];
 
         let activity = await MessActivity.findOne({ student: req.user.id, date: today });
@@ -35,32 +35,37 @@ export const submitFeedback = async (req, res) => {
         let activity = await MessActivity.findOne({ student: req.user.id, date: today });
         if (!activity) return res.status(404).json({ message: "Mark attendance first!" });
 
-        // --- AI SENTIMENT LOGIC (Using Official OpenAI SDK) ---
         let detectedSentiment = 'Neutral';
-        
+
         if (comment) {
             try {
                 const response = await openai.chat.completions.create({
-                    model: "gpt-3.5-turbo",
+                    model: "gpt-4o-mini",
                     messages: [
-                        { role: "system", content: "You are a sentiment analyzer. Reply only with one word: Positive, Negative, or Neutral." },
-                        { role: "user", content: `Analyze this hostel food review: "${comment}"` }
+                        {
+                            role: "system",
+                            content: "You are an expert food critic analyzer. Classify the user's review strictly as 'Positive', 'Negative', or 'Neutral'. If they complain about salt, hardness, or quality, it is ALWAYS 'Negative'."
+                        },
+                        { role: "user", content: `Review: "${comment}"` }
                     ],
+                    temperature: 0, // Isse AI hamesha consistent results dega
                     max_tokens: 10,
                 });
-                detectedSentiment = response.choices[0].message.content.trim();
+
+                // Trim() aur capitalize karke save karna
+                detectedSentiment = response.choices[0].message.content.trim().replace(/[.!?]/g, "");
             } catch (err) {
                 console.error("OpenAI SDK Error:", err.message);
+                // Default Neutral hi rahega agar API fail hui
             }
         }
-
         activity.feedback = { rating, comment, sentiment: detectedSentiment };
         await activity.save();
 
-        res.status(200).json({ 
-            message: "Feedback submitted!", 
+        res.status(200).json({
+            message: "Feedback submitted!",
             sentiment: detectedSentiment,
-            activity 
+            activity
         });
     } catch (error) {
         res.status(500).json({ error: error.message });
