@@ -30,3 +30,12 @@ export const adminOnly = (req, res, next) => {
         });
     }
 };
+export const staffOnly = (req, res, next) => {
+    if (req.user && (req.user.role === 'staff') || (req.user.role === 'admin') || (req.user.role === 'warden')) {
+        next();
+    } else {
+        return res.status(403).json({ 
+            message: "Access denied: Only Staff can perform this action" 
+        });
+    }
+};

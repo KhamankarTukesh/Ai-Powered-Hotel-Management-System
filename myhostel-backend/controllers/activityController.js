@@ -5,7 +5,7 @@ export const getStudentActivities = async (req, res) => {
         const targetStudent = req.params.studentId || req.user.id;
 
         const history = await ActivityLog.find({ student: targetStudent })
-                                         .populate('student', 'fullName roomNumber') // Detail dikhane ke liye
+                                         .populate('student', 'fullName roomNumber') 
                                          .sort({ timestamp: -1 }); 
         
         res.status(200).json(history);

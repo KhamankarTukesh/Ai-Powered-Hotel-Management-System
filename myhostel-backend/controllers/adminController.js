@@ -3,7 +3,7 @@ import User from '../models/User.js';
 import Complaint from '../models/Complaint.js';
 import Fee from '../models/Fee.js';
 import Attendance from '../models/Attendance.js';
-import MessActivity from '../models/MessActivity.js'; // Ise add karo
+import MessActivity from '../models/MessActivity.js'; 
 import OpenAI from 'openai';
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });

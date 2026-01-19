@@ -107,7 +107,6 @@ if (status === 'Resolved') {
 };
 
 
-// controllers/complaintController.js
 
 export const assignComplaint = async (req, res) => {
     try {
@@ -116,7 +115,7 @@ export const assignComplaint = async (req, res) => {
         const complaint = await Complaint.findByIdAndUpdate(
             complaintId,
             { 
-                assignedTo: staffId, // Asli ID yahan ja rahi hai
+                assignedTo: staffId, 
                 status: 'In Progress',
                 updatedAt: Date.now() 
             },
