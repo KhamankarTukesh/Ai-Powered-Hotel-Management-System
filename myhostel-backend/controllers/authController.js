@@ -5,34 +5,38 @@ import ActivityLog from "../models/ActivityLog.js";
 import dotenv from "dotenv";
 dotenv.config();
 
-
-// registerUser ko update kar rahe hain
 export const registerUser = async (req, res) => {
     try {
-        const { fullName, email, password, rollNumber, department, phone } = req.body;
+        // 1. Data extract karo (Frontend ke FormData ke hisaab se)
+        const { fullName, email, password, studentDetails } = req.body;
 
         const userExist = await User.findOne({ email });
         if (userExist) return res.status(400).json({ message: "Email already registered!" });
 
-        // 1. Generate 6-digit OTP
+        // 2. OTP Generate karo
         const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
-        const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 min expiry
+        const otpExpires = new Date(Date.now() + 10 * 60 * 1000); 
 
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
-const newUser = new User({
+        // 3. New User Create karo
+        const newUser = new User({
             fullName,
             email,
             password: hashedPassword,
             role: 'student',
             studentDetails: {
-                rollNumber: rollNumber || "",
-                department: department || "",
-                phone: phone || "",
+                // Frontend se studentDetails object ke andar data aa raha hai
+                rollNumber: studentDetails?.rollNumber || "",
+                department: studentDetails?.department || "",
+                phone: studentDetails?.phone || "",
+                course: studentDetails?.course || "",
+                batch: studentDetails?.batch || "",
+                currentYear: studentDetails?.currentYear || "",
+                // Cloudinary URL yahan save hoga req.file.path se
                 idCardImage: req.file ? req.file.path : "" 
             },
-            // Khali object initialize kar do taaki baad mein update ho sake
             parentDetails: {
                 guardianName: "",
                 guardianContact: "",
@@ -47,10 +51,10 @@ const newUser = new User({
         });
 
         await newUser.save();
-        console.log(`OTP for ${email} is: ${otpCode}`); // Testing ke liye console par
+        console.log(`OTP for ${email} is: ${otpCode}`);
 
         res.status(201).json({
-            message: "Registration Successful! Please verify OTP sent to your email.",
+            message: "Registration Successful! Please verify OTP.",
             userId: newUser._id
         });
     } catch (error) {
