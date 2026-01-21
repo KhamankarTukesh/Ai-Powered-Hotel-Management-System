@@ -6,7 +6,7 @@ const router = express.Router();
 
 router.post('/apply', protect, applyGatePass);
 router.put('/approve/:id', protect, adminOnly, approveGatePass);
-router.put('/movement/:id', protect, markMovement); 
+router.patch('/movement/:id', protect, markMovement);
 router.delete('/delete/:id', protect, adminOnly, deleteGatePass);
 
 export default router;

@@ -10,3 +10,4 @@ router.post('/analyze-feedback', protect, adminOnly, analyzeMessFeedback);
 router.post('/suggest-room',protect,adminOnly, suggestRoomAI);
 
 export default router;
+

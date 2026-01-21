@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion'; // Animation ke liye
 import { User, Lock, ArrowRight, Building2 } from 'lucide-react'; // Icons ke liye
-import API from '../api/axios';
+import API from '../../api/axios';
 import { useNavigate, Link } from 'react-router-dom';
 
 const Login = () => {
@@ -51,7 +51,7 @@ const Login = () => {
               <User className="absolute left-3 top-3 w-5 h-5 text-slate-400 group-focus-within:text-indigo-600 transition-colors" />
               <input 
                 type="email" 
-                placeholder="Enter your email"
+                placeholder="name@university.edu"
                 className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 transition-all duration-300"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -70,7 +70,7 @@ const Login = () => {
               <Lock className="absolute left-3 top-3 w-5 h-5 text-slate-400 group-focus-within:text-indigo-600 transition-colors" />
               <input 
                 type="password" 
-                placeholder="Enter your password"
+                placeholder="••••••••"
                 className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 transition-all duration-300"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}

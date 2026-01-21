@@ -4,7 +4,7 @@ import {
   User, Mail, Lock, Phone, Hash, BookOpen,
   Calendar, GraduationCap, Camera, ArrowRight, Layers
 } from 'lucide-react';
-import API from '../api/axios';
+import API from '../../api/axios';
 import { useNavigate, Link } from 'react-router-dom';
 
 const Register = () => {
@@ -99,7 +99,7 @@ const Register = () => {
             </h2>
           </div>
 
-          <Input label="Full Name" icon={User} name="fullName" placeholder="John Doe" onChange={handleChange} />
+          <Input label="Full Name" icon={User} name="fullName" placeholder="Enter your full name" onChange={handleChange} />
           <Input label="Email" icon={Mail} type="email" name="email" placeholder="Enter your email" onChange={handleChange} />
           <Input label="Password" icon={Lock} type="password" name="password" placeholder="Enter your password" onChange={handleChange} />
 
@@ -110,7 +110,7 @@ const Register = () => {
             </h2>
           </div>
 
-          <Input label="Roll Number" icon={Hash} name="rollNumber" placeholder="2024-CS-01" onChange={handleChange} />
+          <Input label="Roll Number" icon={Hash} name="rollNumber" placeholder="124BTXXXXX" onChange={handleChange} />
           <Input label="Course" icon={Layers} name="course" placeholder="B.Tech" onChange={handleChange} />
           
           <Select
@@ -118,7 +118,7 @@ const Register = () => {
             icon={BookOpen}
             name="department"
             onChange={handleChange}
-            options={['CS', 'EE', 'ME', 'Civil']}
+            options={['Computer Engineering', 'Electrical Engineering', 'Mechanical Engineering', 'Civil Engineering']}
           />
 
           <Input label="Batch" icon={Calendar} name="batch" placeholder="2022-2026" onChange={handleChange} />

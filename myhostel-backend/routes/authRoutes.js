@@ -15,8 +15,6 @@ const upload = multer({ storage: storage });
 // Registration mein image upload logic
 router.post('/register', upload.single('idCardImage'), registerUser);
 
-// Profile Update mein bhi image upload add karein
-// TAAKI STUDENT BAAD MEIN BHI ID UPLOAD KAR SAKE
 router.put('/update-profile', protect, upload.single('idCardImage'), updateProfile);
 
 // Baki routes same rahenge...
@@ -25,5 +23,6 @@ router.post('/login', loginUser);
 router.post('/forgot-password', forgotPassword);
 router.post('/reset-password', resetPassword);
 router.post('/create-staff', protect, adminOnly, createStaff);
+
 
 export default router;

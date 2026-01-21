@@ -87,12 +87,10 @@ export const exportFeeReport = async (req, res) => {
     try {
         const fees = await Fee.find().populate('student', 'fullName email');
         
-        // Data format set karna Excel ke liye
+        
         const fields = ['student.fullName', 'totalAmount', 'paidAmount', 'status', 'dueDate'];
         const json2csvParser = new Parser({ fields });
         const csv = json2csvParser.parse(fees);
-
-        // Browser ko batana ki ye file download karni hai
         res.header('Content-Type', 'text/csv');
         res.attachment('Hostel_Fee_Report.csv');
         return res.send(csv);

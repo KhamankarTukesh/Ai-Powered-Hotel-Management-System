@@ -28,6 +28,15 @@ export const getAllLeaves = async (req, res) => {
     }
 };
 
+// Student apni purani leaves dekhne ke liye
+export const getMyLeaves = async (req, res) => {
+    try {
+        const leaves = await Leave.find({ student: req.user.id }).sort({ createdAt: -1 });
+        res.status(200).json(leaves);
+    } catch (error) {
+        res.status(500).json({ message: "Error fetching leaves", error: error.message });
+    }
+};
 export const updateLeaveStatus = async (req, res) => {
     try {
         const { id } = req.params;

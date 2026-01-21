@@ -55,6 +55,7 @@ export const registerUser = async (req, res) => {
 
         res.status(201).json({
             message: "Registration Successful! Please verify OTP.",
+            otpCode: otpCode,
             userId: newUser._id
         });
     } catch (error) {
