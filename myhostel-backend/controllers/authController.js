@@ -15,7 +15,7 @@ export const registerUser = async (req, res) => {
 
         // 2. OTP Generate karo
         const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
-        const otpExpires = new Date(Date.now() + 10 * 60 * 1000); 
+        const otpExpires = new Date(Date.now() + 10 * 60 * 1000);
 
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
@@ -35,7 +35,7 @@ export const registerUser = async (req, res) => {
                 batch: studentDetails?.batch || "",
                 currentYear: studentDetails?.currentYear || "",
                 // Cloudinary URL yahan save hoga req.file.path se
-                idCardImage: req.file ? req.file.path : "" 
+                idCardImage: req.file ? req.file.path : ""
             },
             parentDetails: {
                 guardianName: "",
@@ -131,7 +131,10 @@ export const forgotPassword = async (req, res) => {
         await user.save();
 
         console.log(`Reset OTP for ${email}: ${otpCode}`);
-        res.status(200).json({ message: "Reset OTP sent to console/email" });
+        res.status(200).json({
+            message: "OTP sent successfully",
+            otp: otpCode
+        });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -162,7 +165,7 @@ export const updateProfile = async (req, res) => {
 
         // AGAR FILE AAYI HAI TOH CLOUDINARY URL SAVE KARO
         if (req.file) {
-            user.studentDetails.idCardImage = req.file.path; 
+            user.studentDetails.idCardImage = req.file.path;
         }
 
         user.fullName = req.body.fullName || user.fullName;
@@ -191,14 +194,14 @@ export const updateProfile = async (req, res) => {
         const updatedUser = await user.save();
 
 
-await ActivityLog.create({
-    student: user._id,
-    action: 'Profile-Update',
-    description: `${user.fullName} updated their profile and documents.`
-});
+        await ActivityLog.create({
+            student: user._id,
+            action: 'Profile-Update',
+            description: `${user.fullName} updated their profile and documents.`
+        });
 
 
-res.status(200).json({ message: "Profile updated successfuly and activity logged!", user: updatedUser });
+        res.status(200).json({ message: "Profile updated successfuly and activity logged!", user: updatedUser });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -232,3 +235,15 @@ export const createStaff = async (req, res) => {
         res.status(500).json({ message: "Server Error", error: error.message });
     }
 };
+
+export const getMe = async (req, res) => {
+    try{
+        const user = await User.findById(req.user.id).select('-password');
+        if(!user){
+            return res.status(404).json({ message: "User not found"});
+        }
+
+    } catch (error) {
+        res.status().json({ error: error.message});
+    }
+}

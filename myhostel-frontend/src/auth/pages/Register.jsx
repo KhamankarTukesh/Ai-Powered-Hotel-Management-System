@@ -4,7 +4,7 @@ import {
   User, Mail, Lock, Phone, Hash, BookOpen,
   Calendar, GraduationCap, Camera, ArrowRight, Layers
 } from 'lucide-react';
-import API from '../../api/axios';
+import API from '../../api/axios.js';
 import { useNavigate, Link } from 'react-router-dom';
 
 const Register = () => {

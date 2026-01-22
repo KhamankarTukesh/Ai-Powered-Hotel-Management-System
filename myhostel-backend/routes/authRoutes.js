@@ -1,5 +1,5 @@
 import express from 'express';
-import { registerUser, loginUser, createStaff, verifyOTP, forgotPassword, resetPassword, updateProfile } from '../controllers/authController.js';
+import { registerUser, loginUser, createStaff, verifyOTP, forgotPassword, resetPassword, updateProfile , getMe} from '../controllers/authController.js';
 import { protect, adminOnly } from '../middleware/authMiddleware.js';
 import multer from 'multer';
 
@@ -23,6 +23,7 @@ router.post('/login', loginUser);
 router.post('/forgot-password', forgotPassword);
 router.post('/reset-password', resetPassword);
 router.post('/create-staff', protect, adminOnly, createStaff);
+router.get('/me', protect,getMe);
 
 
 export default router;
