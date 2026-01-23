@@ -7,7 +7,6 @@ const initCronJobs = () => {
         console.log("Running Daily Penalty Check... ⏳");
         try {
             const today = new Date();
-            // Un paid fees dhundo jinki dueDate nikal chuki hai
             const overdueFees = await Fee.find({ 
                 dueDate: { $lt: today }, 
                 status: { $in: ['Unpaid', 'Partially Paid', 'Pending Verification'] } 
@@ -16,7 +15,6 @@ const initCronJobs = () => {
             for (let fee of overdueFees) {
                 const penalty = 500;
                 fee.totalAmount += penalty; 
-                // Aap chaho toh yahan ek log bhi save kar sakte ho
                 await fee.save();
             }
             console.log(`Applied penalty to ${overdueFees.length} accounts! 💸`);

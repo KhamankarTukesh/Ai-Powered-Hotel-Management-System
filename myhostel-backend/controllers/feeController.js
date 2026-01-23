@@ -204,3 +204,33 @@ export const applyMessRebate = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
+
+
+export const exportFeeCSV = async (req, res) => {
+    try {
+        const fees = await Fee.find().populate('student', 'fullName email');
+        
+        // Data format for CSV
+        const data = fees.map(f => ({
+            "Student Name": f.student?.fullName || 'N/A',
+            "Hostel Rent": f.hostelRent,
+            "Mess Charges": f.messCharges,
+            "Total Amount": f.totalAmount,
+            "Paid Amount": f.paidAmount,
+            "Balance": f.totalAmount - f.paidAmount,
+            "Status": f.status,
+            "Due Date": new Date(f.dueDate).toLocaleDateString()
+        }));
+
+        const json2csvParser = new Parser();
+        const csv = json2csvParser.parse(data);
+
+        // Setting headers for direct Excel download
+        res.header('Content-Type', 'text/csv');
+        res.attachment(`Fee_Report_${Date.now()}.csv`);
+        return res.send(csv);
+
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
