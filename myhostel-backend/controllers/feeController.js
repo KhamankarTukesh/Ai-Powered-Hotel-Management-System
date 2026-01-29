@@ -19,43 +19,40 @@ export const createFeeRecord = async (req, res) => {
     }
 };
 
-// 2. Payment Update karna (Pay Fees)
 export const payFees = async (req, res) => {
     try {
-        // req.body se manual transaction ID aur amount le rahe hain
         const { amount, paymentMethod, externalTransactionId } = req.body;
-
         const fee = await Fee.findOne({ student: req.user.id });
 
         if (!fee) {
             return res.status(404).json({ message: "Fee record not found for this student." });
         }
 
-        // 1. Transaction details array mein push karna (Without updating paidAmount yet)
+        const newReceiptId = externalTransactionId || `REC${Date.now()}`;
+
         fee.transactions.push({
             amount,
             paymentMethod,
             date: Date.now(),
-            // Agar student ID bhej raha hai toh wo, warna system ID
-            receiptId: externalTransactionId || `REC${Date.now()}`
+            receiptId: newReceiptId
         });
 
-        // 2. Status ko "Pending Verification" karna taaki Warden ko dashboard pe dikhe
         fee.status = 'Pending Verification';
-
         await fee.save();
 
+        // Hum response mein specific instructions bhej rahe hain frontend ke liye
         res.status(200).json({
-            message: "Payment details submitted! Pending warden approval. ✅",
-            receiptId: fee.transactions[fee.transactions.length - 1].receiptId,
-            status: fee.status
+            message: "Payment submitted! ✅ IMPORTANT: Your receipt is valid for TODAY ONLY. Please download it within the next 1 minute.",
+            receiptId: newReceiptId,
+            status: fee.status,
+            downloadUrl: `/api/fee/receipt/${newReceiptId}`, // Direct link for frontend
+            timer: 60000 // 1 minute in milliseconds for the toast
         });
 
     } catch (error) {
-        res.status(500).json({ error: "Server error during payment: " + error.message });
+        res.status(500).json({ error: error.message });
     }
 };
-
 // AI Function to calculate risk
 const calculatePaymentRisk = (attendanceRate, daysToDeadline, paidPercentage) => {
     if (attendanceRate < 60 || (daysToDeadline < 3 && paidPercentage === 0)) {
@@ -65,7 +62,21 @@ const calculatePaymentRisk = (attendanceRate, daysToDeadline, paidPercentage) =>
     }
     return 'Low';
 };
+// Controller to fetch current student's fee details
+export const getMyFees = async (req, res) => {
+    try {
+        // req.user.id 'protect' middleware se aata hai
+        const fee = await Fee.findOne({ student: req.user.id });
 
+        if (!fee) {
+            return res.status(404).json({ message: "No fee record found for this student." });
+        }
+
+        res.status(200).json(fee);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
 
 export const getFeeAnalytics = async (req, res) => {
     try {
@@ -85,54 +96,100 @@ export const getFeeAnalytics = async (req, res) => {
 
 export const downloadReceipt = async (req, res) => {
     try {
-        const { transactionId } = req.params;
+        let { transactionId } = req.params;
+        let fee;
 
-        // Transaction ID ke basis par fee record dhundo
-        const fee = await Fee.findOne({ "transactions.receiptId": transactionId }).populate('student', 'fullName email');
-
-        if (!fee) {
-            return res.status(404).json({ message: "Receipt not found for this Transaction ID!" });
+        // 1. Check if we need the latest receipt or a specific one
+        if (!transactionId || transactionId === 'latest' || transactionId === 'undefined') {
+            fee = await Fee.findOne({ student: req.user.id }).populate('student', 'fullName email');
+            if (!fee || fee.transactions.length === 0) {
+                return res.status(404).json({ message: "No transactions found!" });
+            }
+            // Pick the last transaction
+            const latest = fee.transactions[fee.transactions.length - 1];
+            transactionId = latest.receiptId;
+        } else {
+            fee = await Fee.findOne({ "transactions.receiptId": transactionId }).populate('student', 'fullName email');
         }
 
-        // Specific transaction ki details nikalna
+        if (!fee) return res.status(404).json({ message: "Receipt not found!" });
+
         const transaction = fee.transactions.find(t => t.receiptId === transactionId);
+        const today = new Date().toLocaleDateString();
 
-        // PDF Document setup
+        // 2. Setup PDF Document
         const doc = new PDFDocument({ margin: 50 });
-
-        // Browser ko batana ki ye PDF file hai
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `attachment; filename=Receipt_${transactionId}.pdf`);
-
         doc.pipe(res);
 
-        // --- PDF Design ---
-        doc.fontSize(20).text('HOSTEL MANAGEMENT SYSTEM', { align: 'center', underline: true });
+        // --- Logic for Dynamic Colors ---
+        const isVerified = fee.status === 'Paid' || fee.status === 'Partially Paid';
+        const statusColor = isVerified ? '#28a745' : '#e67e22';
+        const statusText = fee.status.toUpperCase();
+
+        // Header Section
+        doc.fillColor('#333').fontSize(22).text('HOSTEL MANAGEMENT SYSTEM', { align: 'center', bold: true });
+        doc.moveDown(0.5);
+        doc.fontSize(14).fillColor('#666').text('OFFICIAL PAYMENT RECEIPT', { align: 'center' });
+
+        // --- EXPIRE NOTIFICATION (Professional Alert) ---
         doc.moveDown();
-        doc.fontSize(16).text('OFFICIAL FEE RECEIPT', { align: 'center' });
+        doc.rect(50, doc.y, 500, 20).fill('#fff5f5'); 
+        doc.fillColor('#e74c3c').fontSize(9).text(
+            `⚠️ IMPORTANT: This receipt is generated for today (${today}) only. Please download and save it immediately.`, 
+            50, doc.y + 6, { align: 'center', width: 500, bold: true }
+        );
+        doc.moveDown(1.5);
+
+        // --- Status Badge ---
+        doc.rect(200, doc.y, 200, 25).fill(statusColor);
+        doc.fillColor('#fff').fontSize(12).text(statusText, 200, doc.y + 7, { align: 'center', width: 200 });
+        doc.moveDown(2).fillColor('#333');
+
+        // Dates & IDs
+        doc.fontSize(10).text(`Generated Date: ${today}`, { align: 'right' });
+        doc.text(`Receipt ID: ${transaction.receiptId}`, { align: 'right' });
         doc.moveDown();
 
-        doc.fontSize(12).text(`Date: ${new Date().toLocaleDateString()}`);
-        doc.text(`Receipt ID: ${transaction.receiptId}`);
+        // Student Info
+        doc.fontSize(12).text('STUDENT INFORMATION', { underline: true });
+        doc.moveDown(0.5);
+        doc.text(`Name: ${fee.student.fullName}`);
+        doc.text(`Email: ${fee.student.email}`);
         doc.moveDown();
 
-        doc.text('--------------------------------------------------');
-        doc.text(`Student Name: ${fee.student.fullName}`);
-        doc.text(`Student Email: ${fee.student.email}`);
-        doc.text('--------------------------------------------------');
+        // --- FEE BREAKDOWN (Added from Warden Records) ---
+        doc.fontSize(12).text('FEE BREAKDOWN', { underline: true });
+        doc.moveDown(0.5);
+        doc.fontSize(10).text(`Hostel Rent: Rs. ${fee.hostelRent}`);
+        doc.text(`Mess Charges: Rs. ${fee.messCharges}`);
+        doc.fontSize(11).text(`Total Bill Amount: Rs. ${fee.totalAmount}`, { bold: true });
         doc.moveDown();
 
-        doc.fontSize(14).text(`Amount Paid: Rs. ${transaction.amount}`, { bold: true });
-        doc.text(`Payment Method: ${transaction.paymentMethod}`);
-        doc.text(`Payment Date: ${new Date(transaction.date).toLocaleString()}`);
+        // Transaction Details
+        doc.rect(50, doc.y, 500, 1).fill('#eee');
+        doc.moveDown();
+        doc.fillColor('#333').fontSize(14).text(`Amount Received: Rs. ${transaction.amount}`, { bold: true });
+        doc.fontSize(11).fillColor('#666').text(`Method: ${transaction.paymentMethod}`);
+        doc.text(`Time: ${new Date(transaction.date).toLocaleString()}`);
         doc.moveDown();
 
-        doc.fontSize(12).text(`Total Paid So Far: Rs. ${fee.paidAmount}`);
-        doc.text(`Remaining Balance: Rs. ${fee.totalAmount - fee.paidAmount}`);
-        doc.text(`Status: ${fee.status}`);
+        // Footer Totals
+        doc.rect(50, doc.y, 500, 1).fill('#eee');
+        doc.moveDown();
+        doc.fillColor('#333').fontSize(12).text(`Cumulative Paid: Rs. ${fee.paidAmount}`);
+        doc.fillColor(fee.totalAmount - fee.paidAmount > 0 ? '#e74c3c' : '#28a745');
+        doc.text(`Dues Remaining: Rs. ${fee.totalAmount - fee.paidAmount}`);
 
-        doc.moveDown(2);
-        doc.fontSize(10).text('Note: This is an electronically generated receipt.', { italic: true, align: 'center' });
+        // Stamp
+        doc.moveDown(3);
+        doc.fillColor(statusColor).fontSize(10).text(
+            isVerified ? '✅ VERIFIED TRANSACTION' : '⏳ AWAITING WARDEN VERIFICATION',
+            { align: 'center', bold: true }
+        );
+        
+        doc.fillColor('#999').fontSize(8).text('This is a computer-generated document and does not require a physical signature.', { align: 'center' });
 
         doc.end();
 
@@ -194,10 +251,10 @@ export const applyMessRebate = async (req, res) => {
     try {
         const { feeId, rebateAmount } = req.body;
         const fee = await Fee.findById(feeId);
-        
+
         fee.totalAmount -= rebateAmount; // Bill kam kar diya
         fee.messCharges -= rebateAmount; // Mess breakdown bhi kam kiya
-        
+
         await fee.save();
         res.status(200).json({ message: "Rebate applied successfully! 💸", fee });
     } catch (error) {
@@ -209,7 +266,7 @@ export const applyMessRebate = async (req, res) => {
 export const exportFeeCSV = async (req, res) => {
     try {
         const fees = await Fee.find().populate('student', 'fullName email');
-        
+
         // Data format for CSV
         const data = fees.map(f => ({
             "Student Name": f.student?.fullName || 'N/A',

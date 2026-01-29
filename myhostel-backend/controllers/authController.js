@@ -84,6 +84,32 @@ export const verifyOTP = async (req, res) => {
         res.status(500).json({ message: "Server Error", error: error.message });
     }
 };
+// Controller: Resend OTP
+export const resendOTP = async (req, res) => {
+    try {
+        const { email } = req.body;
+        const user = await User.findOne({ email });
+
+        if (!user) return res.status(404).json({ message: "User not found" });
+
+        // Naya 6-digit OTP generate karna
+        const newOTP = Math.floor(100000 + Math.random() * 900000).toString();
+        
+        user.otp = {
+            code: newOTP,
+            expiresAt: Date.now() + 10 * 60 * 1000 // 10 minutes valid
+        };
+
+        await user.save();
+
+        // TODO: SendEmail(email, newOTP) function yahan call hoga
+        console.log(`Naya OTP for ${email}: ${newOTP}`); 
+
+        res.status(200).json({ message: "New OTP sent to your email! 📧" });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};
 
 //2.Login user
 export const loginUser = async (req, res) => {

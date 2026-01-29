@@ -4,13 +4,15 @@ import {
     getAllComplaints, 
     updateComplaintStatus, // Ab ye use hoga
     assignComplaint,
-    getComplaintById 
+    getComplaintById,
+    getMyComplaints
 } from '../controllers/complaintController.js';
-import { protect, adminOnly,staffOnly } from '../middleware/authMiddleware.js';
+import { protect, adminOnly,staffOnly} from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
-router.post('/', protect, createComplaint);
+router.post('/create', protect, createComplaint);
+router.get('/my-complaints', protect, getMyComplaints);
 router.get('/all', protect, staffOnly, getAllComplaints);
 
 

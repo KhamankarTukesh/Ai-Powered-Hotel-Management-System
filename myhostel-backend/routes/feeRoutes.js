@@ -6,7 +6,8 @@ import {
     getFeeAnalytics, 
     downloadReceipt, 
     clearOldTransactions,
-    applyMessRebate
+    applyMessRebate,
+    getMyFees
 } from '../controllers/feeController.js';
 import { protect, adminOnly } from '../middleware/authMiddleware.js';
 
@@ -25,7 +26,10 @@ router.put('/verify', protect, adminOnly, verifyPayment);
 router.get('/analytics', protect, adminOnly, getFeeAnalytics);
 
 // 5. Download PDF Receipt (Student/Admin)
+router.get('/my-latest-receipt', protect, downloadReceipt);
 router.get('/receipt/:transactionId', protect, downloadReceipt);
+
+router.get('/my-fees', protect, getMyFees);
 
 // 6. Archive Old Transactions (Admin)
 router.delete('/clear/:feeId', protect, adminOnly, clearOldTransactions);

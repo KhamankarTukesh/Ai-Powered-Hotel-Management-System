@@ -1,5 +1,5 @@
 import express from 'express';
-import { registerUser, loginUser, createStaff, verifyOTP, forgotPassword, resetPassword, updateProfile , getMe} from '../controllers/authController.js';
+import { registerUser, loginUser, createStaff, verifyOTP, resendOTP,forgotPassword, resetPassword, updateProfile , getMe} from '../controllers/authController.js';
 import { protect, adminOnly } from '../middleware/authMiddleware.js';
 import multer from 'multer';
 
@@ -19,6 +19,7 @@ router.put('/update-profile', protect, upload.single('idCardImage'), updateProfi
 
 // Baki routes same rahenge...
 router.post('/verify-otp', verifyOTP);
+router.post('/resend-otp', resendOTP);
 router.post('/login', loginUser);
 router.post('/forgot-password', forgotPassword);
 router.post('/reset-password', resetPassword);
