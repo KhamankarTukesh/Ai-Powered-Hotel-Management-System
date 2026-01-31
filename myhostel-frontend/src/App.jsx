@@ -29,6 +29,11 @@ import API from './api/axios';
 
 
 
+//warden
+import MarkAttendance from './warden/pages/MarkAttendance';
+import WardenComplaintDashboard from './warden/pages/WardenComplaintDashboard';
+
+
 
 const StudentLayout = () => {
   const navigate = useNavigate();
@@ -123,6 +128,12 @@ function App() {
           <Route path="/gate-pass-manager" element={<GatePassManager />} />
           <Route path='/activity-history' element={<ActivityHistory/>}/>
           <Route path='/student/profile' element={<StudentProfile/>}/>
+
+
+
+          {/* warden */}
+          <Route path='/markattendance' element={<MarkAttendance/>}/>
+          <Route path='/warden/complaints' element={<WardenComplaintDashboard/>}/>
         </Route>
 
         <Route path='/navbar-preview' element={<Navbar/>}/>

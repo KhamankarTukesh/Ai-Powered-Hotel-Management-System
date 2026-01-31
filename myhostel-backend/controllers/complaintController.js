@@ -170,3 +170,30 @@ export const getComplaintById = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+export const deleteResolvedComplaint = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        // 1. Find the complaint in your DB
+        const complaint = await Complaint.findById(id);
+
+        if (!complaint) {
+            return res.status(404).json({ message: "Complaint not found" });
+        }
+
+        // 2. Safety Check: Only allow deletion if status is 'Resolved'
+        if (complaint.status !== 'Resolved') {
+            return res.status(400).json({ 
+                message: "Only resolved complaints can be removed from the database." 
+            });
+        }
+
+        // 3. Delete from DB
+        await Complaint.findByIdAndDelete(id);
+
+        res.status(200).json({ message: "Complaint record deleted successfully." });
+    } catch (error) {
+        console.error("Delete Error:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+};

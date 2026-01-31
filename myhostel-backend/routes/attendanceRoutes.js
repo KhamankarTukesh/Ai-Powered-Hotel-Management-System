@@ -1,5 +1,5 @@
 import express from 'express';
-import { markAttendance, getMyAttendance ,getDailyReport } from '../controllers/attendanceController.js';
+import { markAttendance, getMyAttendance ,getDailyReport ,deleteDailyReport} from '../controllers/attendanceController.js';
 import { protect, adminOnly } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
@@ -12,5 +12,5 @@ router.post('/mark', protect, adminOnly, markAttendance);
 
 router.get('/daily-report', protect, adminOnly, getDailyReport);
 router.get('/my-stats', protect, getMyAttendance);
-
+router.delete('/daily-report', deleteDailyReport);
 export default router;
