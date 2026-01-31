@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { login } from '../services/auth.services.js';
 import AuthLayout from '../components/AuthLayout';
 import { Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
+import toast from 'react-hot-toast'; // 1. Import Toast
 
 const Login = () => {
   const [formData, setFormData] = useState({ email: '', password: '' });
@@ -12,15 +13,29 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+
+    // Initial Loading Toast (Optional but looks pro)
+    const loginToast = toast.loading('Authenticating your credentials...');
+
     try {
       const { data } = await login(formData);
 
-      // Save Token and Role
+      // Save Token, Role, and User
       localStorage.setItem('token', data.token);
       localStorage.setItem('role', data.user.role);
-
-      // ✅ ADD THIS LINE: Ye user object ko storage mein dalega
       localStorage.setItem('user', JSON.stringify(data.user));
+
+      // 2. Professional Success Notification
+      toast.success(`Welcome back, ${data.user.name.split(' ')[0]}! 👋`, {
+        id: loginToast, // Ye purane loading toast ko replace kar dega
+        duration: 4000,
+        style: {
+            borderRadius: '15px',
+            background: '#1e293b',
+            color: '#fff',
+            fontWeight: 'bold',
+        },
+      });
 
       if (data.user.role === 'admin') {
         navigate('/admin/dashboard');
@@ -28,7 +43,15 @@ const Login = () => {
         navigate('/student/dashboard');
       }
     } catch (err) {
-      alert(err.response?.data?.message || "Login failed.");
+      // 3. Professional Error Notification
+      const errorMessage = err.response?.data?.message || "Invalid credentials. Please try again.";
+      
+      toast.error(errorMessage, {
+        id: loginToast,
+        style: {
+            borderRadius: '15px',
+        }
+      });
     } finally {
       setLoading(false);
     }
@@ -37,7 +60,7 @@ const Login = () => {
   return (
     <AuthLayout
       title="Welcome Back"
-      subtitle="Please enter your details to sign in to HostelHub"
+      subtitle="Please enter your details to sign in to Dnyanda" // Updated Brand Name
     >
       <form onSubmit={handleSubmit} className="space-y-5">
         <div className="space-y-4">
@@ -69,7 +92,7 @@ const Login = () => {
         <div className="flex justify-end pr-1">
           <Link
             to="/forgot-password"
-            className="text-xs font-bold text-[#f97415] hover:text-[#ea580c] transition-colors"
+            className="text-xs font-black text-[#f97415] hover:text-[#ea580c] transition-colors uppercase tracking-wider"
           >
             Forgot Password?
           </Link>
@@ -77,7 +100,7 @@ const Login = () => {
 
         <button
           disabled={loading}
-          className="w-full bg-[#f97415] text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-[#ea580c] transition-all shadow-lg shadow-orange-100 active:scale-[0.98] disabled:opacity-70"
+          className="w-full bg-[#f97415] text-white py-4 rounded-2xl font-[1000] flex items-center justify-center gap-2 hover:bg-[#ea580c] transition-all shadow-xl shadow-orange-100 active:scale-[0.98] disabled:opacity-70 uppercase tracking-widest"
         >
           {loading ? (
             <Loader2 className="animate-spin" size={20} />
@@ -86,13 +109,14 @@ const Login = () => {
           )}
         </button>
 
+        {/* ... Rest of the UI remains the same ... */}
         <div className="relative py-2">
           <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-slate-100"></span></div>
           <div className="relative flex justify-center text-[10px] uppercase font-bold text-slate-300 bg-transparent px-2">OR</div>
         </div>
 
         <p className="text-center text-sm font-medium text-slate-500">
-          Don't have an account? <Link to="/register" className="text-[#f97415] font-bold hover:underline">Create Account</Link>
+          Don't have an account? <Link to="/register" className="text-[#f97415] font-black hover:underline">Create Account</Link>
         </p>
       </form>
     </AuthLayout>

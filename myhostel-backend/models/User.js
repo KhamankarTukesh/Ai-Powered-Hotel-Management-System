@@ -33,7 +33,9 @@ const userSchema = new mongoose.Schema({
     },
     parentDetails: {
         guardianName: String,
-        guardianContact: String,
+        guardianContact: {
+            type:Number,
+        },
         relation: String,
         address: String
     },

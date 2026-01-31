@@ -1,16 +1,14 @@
-import React from 'react';
-import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 
-const ProtectedRoute = () => {
+const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem('token');
-
-  // Agar token nahi hai, toh login page pe bhej do
+  
+  // Agar token nahi hai, toh login page par bhej do
   if (!token) {
     return <Navigate to="/login" replace />;
   }
 
-  // Agar token hai, toh andar jane do (Outlet matlab child components)
-  return <Outlet />;
+  return children;
 };
 
-export default ProtectedRoute;
+export default ProtectedRoute

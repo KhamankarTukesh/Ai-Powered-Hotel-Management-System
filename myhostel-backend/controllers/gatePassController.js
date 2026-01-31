@@ -15,6 +15,21 @@ export const applyGatePass = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
+export const getActivePass = async (req, res) => {
+    try {
+        // Hum sirf wo pass dhoond rahe hain jo is student ka hai 
+        // Aur status 'Returned' ya 'Rejected' nahi hai (Ya simply wo delete nahi hua)
+        const activePass = await GatePass.findOne({ student: req.user.id });
+        
+        if (!activePass) {
+            return res.status(200).json({ active: false, pass: null });
+        }
+
+        res.status(200).json({ active: true, pass: activePass });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
 
 // 2. Warden Approve
 export const approveGatePass = async (req, res) => {
@@ -31,50 +46,38 @@ export const approveGatePass = async (req, res) => {
     }
 };
 
-// 3. Guard Exit/Entry mark 
 export const markMovement = async (req, res) => {
     try {
         const { id } = req.params;
-        const { type } = req.body; // 'out' ya 'in'
-        
-        // Sahi field: fullName aur studentDetails (idCardImage ke liye)
+        const { type } = req.body;
+
         const pass = await GatePass.findById(id).populate('student', 'fullName studentDetails');
-        
         if (!pass) return res.status(404).json({ message: "Gate Pass not found!" });
 
         if (type === 'out') {
             pass.outTime = Date.now();
             pass.status = 'Out';
-        } else if (type === 'in') {
-            pass.actualInTime = Date.now();
-            pass.status = 'Returned';
+            await pass.save();
+            return res.status(200).json({ message: "Student marked OUT", pass });
+        } 
+        
+        if (type === 'in') {
+            // Check if student is late before deleting for the response message
+            const isLate = Date.now() > new Date(pass.expectedInTime).getTime();
+            
+            // STUDENT HOSTEL AA GAYA -> DELETE FROM DB
+            await GatePass.findByIdAndDelete(id);
 
-            // 🧐 LATE RETURN LOGIC
-            if (pass.actualInTime > pass.expectedInTime) {
-                // Save changes before returning error response
-                await pass.save();
-                return res.status(200).json({ 
-                    message: "Student returned LATE! ⚠️ Warning logged.", 
-                    lateEntry: true,
-                    studentName: pass.student.fullName,
-                    studentPhoto: pass.student.studentDetails.idCardImage, // Asli photo field
-                    pass 
-                });
-            }
+            return res.status(200).json({ 
+                message: isLate ? "Returned LATE! Record cleared." : "Welcome back! Pass cleared.",
+                lateEntry: isLate,
+                cleared: true 
+            });
         }
-
-        await pass.save();
-        res.status(200).json({ 
-            message: `Student marked ${type} successfully.`, 
-            studentName: pass.student.fullName,
-            studentPhoto: pass.student.studentDetails.idCardImage, // Verification ke liye
-            pass 
-        });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 };
-
 // 4. Delete Gate Pass (Only for Warden/Admin)
 export const deleteGatePass = async (req, res) => {
     try {

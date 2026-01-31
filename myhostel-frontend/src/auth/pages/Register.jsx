@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  User, Mail, Lock, Phone, Hash, BookOpen, 
-  Calendar, GraduationCap, Camera, ArrowRight, Layers, BadgeCheck, School, UploadCloud 
+import {
+    User, Mail, Lock, Phone, Hash, BookOpen,
+    Calendar, GraduationCap, Camera, ArrowRight, Layers, BadgeCheck, School, UploadCloud
 } from 'lucide-react';
 import { register } from '../services/auth.services.js';
 import { useNavigate, Link } from 'react-router-dom';
@@ -46,7 +46,7 @@ const Register = () => {
     return (
         <div className="min-h-screen bg-[#f8f7f5] flex items-center justify-center p-6 font-['Inter']">
             <motion.div
-                initial={{ opacity: 0, y: 20 }} 
+                initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="bg-white shadow-xl shadow-[#00000008] rounded-[2rem] w-full max-w-5xl p-8 md:p-12 border border-[#f0f0f0]"
             >
@@ -109,7 +109,23 @@ const Register = () => {
                             </div>
                             <div className="relative">
                                 <GraduationCap className="absolute left-4 top-1/2 -translate-y-1/2 text-[#f97415]/70" size={18} />
-                                <input type="number" name="currentYear" placeholder="Current Year" className="w-full pl-11 pr-4 py-3.5 rounded-xl border border-[#ffedd5] bg-white focus:ring-2 focus:ring-[#f97415]/20 focus:border-[#f97415] outline-none transition-all placeholder:text-[#8c725f]/50" onChange={handleChange} required />
+                                <select
+                                    name="currentYear"
+                                    className="w-full pl-11 pr-4 py-3.5 rounded-xl border border-[#ffedd5] bg-white focus:ring-2 focus:ring-[#f97415]/20 focus:border-[#f97415] outline-none transition-all text-[#8c725f] appearance-none cursor-pointer"
+                                    onChange={handleChange}
+                                    required
+                                    defaultValue=""
+                                >
+                                    <option value="" disabled>Select Current Year</option>
+                                    <option value="1">1st Year</option>
+                                    <option value="2">2nd Year</option>
+                                    <option value="3">3rd Year</option>
+                                    <option value="4">4th Year</option>
+                                </select>
+                                {/* Dropdown arrow icon */}
+                                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-[#f97415]/70">
+                                    <span className="material-symbols-outlined text-sm">expand_more</span>
+                                </div>
                             </div>
                             <div className="relative">
                                 <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-[#f97415]/70" size={18} />
@@ -145,7 +161,7 @@ const Register = () => {
                         <button type="submit" className="w-full max-w-[400px] h-14 bg-[#f97415] text-white rounded-full text-lg font-bold shadow-lg shadow-orange-100 hover:bg-[#ea580c] transition-all transform active:scale-95 flex items-center justify-center gap-2">
                             Create Account <ArrowRight size={20} />
                         </button>
-                        
+
                         <p className="text-[#8c725f] text-sm">
                             Already have an account? <Link to="/login" className="text-[#f97415] font-bold hover:underline">Login here</Link>
                         </p>

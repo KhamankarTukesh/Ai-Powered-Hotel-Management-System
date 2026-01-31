@@ -19,6 +19,8 @@ import feeRoutes from './routes/feeRoutes.js';
 import messRoutes from './routes/messRoutes.js';
 import initCronJobs from './utils/cronJobs.js';
 import activityRoutes from './routes/activityRoutes.js';
+import studentRoutes from './routes/studentRoutes.js';
+import notificationRoutes from './routes/notificationRoutes.js';
 
 
 
@@ -37,9 +39,11 @@ app.use('/api/ai',aiRoutes);
 app.use('/api/admin',adminRoutes);
 app.use('/api/notice',noticeRoutes);
 app.use('/api/gatepass',gateRoutes);
-app.use('/api/fee/',feeRoutes);
+app.use('/api/fee',feeRoutes);
 app.use('/api/mess', messRoutes);
 app.use('/api/activities', activityRoutes);
+app.use('/api/users', studentRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 
 
