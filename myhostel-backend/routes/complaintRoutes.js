@@ -22,7 +22,7 @@ router.get('/my-complaints', protect, getMyComplaints);
 router.get('/all', protect, staffOnly, getAllComplaints);
 router.get('/:id', protect, staffOnly, getComplaintById);
 router.put('/:id/status', protect, staffOnly, updateComplaintStatus);
-router.delete('/:id', protect, deleteResolvedComplaint);
+router.delete('/:id', protect, adminOnly,deleteResolvedComplaint);
 
 // --- ADMIN ONLY ROUTES ---
 // Sirf Admin (Warden) hi kisi specific staff ko complaint assign kar sakta hai

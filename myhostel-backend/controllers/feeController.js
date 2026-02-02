@@ -1,4 +1,5 @@
 import Fee from '../models/Fee.js';
+import User from '../models/User.js';
 import { Parser } from 'json2csv';
 import PDFDocument from 'pdfkit';
 
@@ -80,19 +81,40 @@ export const getMyFees = async (req, res) => {
 
 export const getFeeAnalytics = async (req, res) => {
     try {
-        const fees = await Fee.find().populate('student', 'fullName studentDetails');
+        const allStudents = await User.find({ role: 'student' }).select('fullName studentDetails');
+        const fees = await Fee.find().populate('student', 'fullName');
 
-        const analyzedFees = fees.map(fee => {
-            const risk = calculatePaymentRisk(80, 5, (fee.paidAmount / fee.totalAmount) * 100);
-            return { ...fee._doc, aiRisk: risk };
+        const combinedData = allStudents.map(student => {
+            const feeRecord = fees.find(f => f.student?._id.toString() === student._id.toString());
+
+            if (feeRecord) {
+                // Ensure we don't divide by zero
+                const progress = feeRecord.totalAmount > 0 ? (feeRecord.paidAmount / feeRecord.totalAmount) * 100 : 0;
+                const risk = calculatePaymentRisk(80, 5, progress);
+                
+                return { 
+                    ...feeRecord._doc, 
+                    student: student, 
+                    aiRisk: risk 
+                };
+            } else {
+                return {
+                    student: student,
+                    status: "Record Not Created",
+                    totalAmount: 0,
+                    paidAmount: 0,
+                    messCharges: 0,
+                    hostelRent: 0,
+                    aiRisk: "N/A"
+                };
+            }
         });
 
-        res.status(200).json(analyzedFees);
+        res.status(200).json(combinedData);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 };
-
 
 export const downloadReceipt = async (req, res) => {
     try {
@@ -236,15 +258,23 @@ export const verifyPayment = async (req, res) => {
 };
 
 export const clearOldTransactions = async (req, res) => {
-    const { feeId } = req.params;
-    const fee = await Fee.findById(feeId);
+    try {
+        const { feeId } = req.params;
+        const fee = await Fee.findById(feeId);
 
-    // Sirf 'Paid' status wale purane records ko khali karna
-    if (fee.status === 'Paid') {
-        fee.transactions = []; // Array reset kar diya
-        await fee.save();
+        if (!fee) return res.status(404).json({ message: "Fee record not found" });
+
+        // Logic: Clear only if fully paid to prevent data loss for pending fees
+        if (fee.status === 'Paid') {
+            fee.transactions = []; 
+            await fee.save();
+            return res.status(200).json({ message: "Transactions cleared for next cycle! 🗑️" });
+        } else {
+            return res.status(400).json({ message: "Cannot clear! Student has outstanding dues." });
+        }
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
-    res.status(200).json({ message: "Old records archived! 🗑️" });
 };
 
 export const applyMessRebate = async (req, res) => {
@@ -265,28 +295,78 @@ export const applyMessRebate = async (req, res) => {
 
 export const exportFeeCSV = async (req, res) => {
     try {
-        const fees = await Fee.find().populate('student', 'fullName email');
+        // Fetch students and fee records to match the Analytics logic
+        const allStudents = await User.find({ role: 'student' }).select('fullName studentDetails');
+        const fees = await Fee.find();
 
-        // Data format for CSV
-        const data = fees.map(f => ({
-            "Student Name": f.student?.fullName || 'N/A',
-            "Hostel Rent": f.hostelRent,
-            "Mess Charges": f.messCharges,
-            "Total Amount": f.totalAmount,
-            "Paid Amount": f.paidAmount,
-            "Balance": f.totalAmount - f.paidAmount,
-            "Status": f.status,
-            "Due Date": new Date(f.dueDate).toLocaleDateString()
-        }));
+        const data = allStudents.map(student => {
+            const f = fees.find(record => record.student.toString() === student._id.toString());
+
+            return {
+                "Student Name": student.fullName || 'N/A',
+                "Roll Number": student.studentDetails?.rollNumber || 'N/A',
+                "Hostel Rent": f ? f.hostelRent : 0,
+                "Mess Charges": f ? f.messCharges : 0,
+                "Total Amount": f ? f.totalAmount : 0,
+                "Paid Amount": f ? f.paidAmount : 0,
+                "Balance Amount": f ? (f.totalAmount - f.paidAmount) : 0,
+                "Payment Status": f ? f.status.toUpperCase() : "RECORD NOT CREATED",
+                // Format: 15/02/2026
+                "Due Date": (f && f.dueDate) ? new Date(f.dueDate).toLocaleDateString('en-GB') : 'N/A'
+            };
+        });
 
         const json2csvParser = new Parser();
         const csv = json2csvParser.parse(data);
 
-        // Setting headers for direct Excel download
+        const dateStr = new Date().toISOString().split('T')[0];
         res.header('Content-Type', 'text/csv');
-        res.attachment(`Fee_Report_${Date.now()}.csv`);
+        res.attachment(`Full_Hostel_Fee_Report_${dateStr}.csv`);
         return res.send(csv);
 
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+export const exportFeeReport = async (req, res) => {
+    try {
+        const fees = await Fee.find().populate('student', 'fullName email');
+        
+        
+        const fields = ['student.fullName', 'totalAmount', 'paidAmount', 'status', 'dueDate'];
+        const json2csvParser = new Parser({ fields });
+        const csv = json2csvParser.parse(fees);
+        res.header('Content-Type', 'text/csv');
+        res.attachment('Hostel_Fee_Report.csv');
+        return res.send(csv);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+export const getPendingVerifications = async (req, res) => {
+    try {
+        // Sirf 'Pending Verification' wale records fetch kar rahe hain
+        const pendingFees = await Fee.find({ status: 'Pending Verification' })
+            .populate('student', 'fullName studentDetails email') // Student ki detail join ki
+            .sort({ updatedAt: -1 });
+
+        // Data transform kar rahe hain taaki frontend ko saaf-saaf dikhe
+        const data = pendingFees.map(fee => {
+            const lastTx = fee.transactions[fee.transactions.length - 1]; // Latest payment
+            return {
+                feeId: fee._id,
+                fullName: fee.student.fullName,
+                rollNumber: fee.student.studentDetails.rollNumber,
+                dept: fee.student.studentDetails.department,
+                amountToVerify: lastTx?.amount,
+                transactionId: lastTx?.receiptId,
+                paymentMethod: lastTx?.paymentMethod,
+                submissionDate: lastTx?.date,
+                totalPending: fee.totalAmount - fee.paidAmount
+            };
+        });
+
+        res.status(200).json(data);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

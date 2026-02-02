@@ -32,7 +32,11 @@ import API from './api/axios';
 //warden
 import MarkAttendance from './warden/pages/MarkAttendance';
 import WardenComplaintDashboard from './warden/pages/WardenComplaintDashboard';
-
+import CreateFee from './warden/pages/wardenfeedashboard/CreateFee';
+import WardenVerifyPayments from './warden/pages/wardenfeedashboard/WardenVerifyPayments';
+import WardenFeeActions from './warden/pages/wardenfeedashboard/WardenFeeActions';
+import WardenManagement from './warden/pages/wardenfeedashboard/WardenManagement';
+import WardenFeeDashboard from './warden/pages/wardenfeedashboard/WardenFeeDashboard';
 
 
 const StudentLayout = () => {
@@ -52,7 +56,7 @@ const StudentLayout = () => {
           headers: { Authorization: `Bearer ${token}` }
         });
 
-        console.log("Fetched Profile:", res.data); // Debugging ke liye
+       
         setProfile(res.data);
       } catch (error) {
         console.error("Error fetching profile:", error);
@@ -134,6 +138,11 @@ function App() {
           {/* warden */}
           <Route path='/markattendance' element={<MarkAttendance/>}/>
           <Route path='/warden/complaints' element={<WardenComplaintDashboard/>}/>
+          <Route path='/warden/fees' element={<CreateFee/>}/>
+          <Route path='/warden/verify' element={<WardenVerifyPayments/>}/>
+          <Route path='/warden/actions' element={<WardenFeeActions/>}/>
+          <Route path='/warden/management' element={<WardenManagement/>}/>
+          <Route path='/warden/feedashboard' element={<WardenFeeDashboard/>}/>
         </Route>
 
         <Route path='/navbar-preview' element={<Navbar/>}/>
