@@ -56,7 +56,9 @@ const WardenFeeDashboard = () => {
             </div>
             <div className="flex items-center gap-3 bg-white/60 px-5 py-3 rounded-full backdrop-blur-md border border-orange-100 shadow-sm z-10">
               <span className="material-symbols-outlined text-orange-500" style={{ fontSize: '20px' }}>calendar_today</span>
-              <span className="text-gray-700 text-sm font-semibold">Academic Year 2026</span>
+              <span className="text-gray-700 text-sm font-semibold">
+  Academic Session {new Date().getFullYear() - 1}-{new Date().getFullYear()}
+</span>
             </div>
           </div>
 

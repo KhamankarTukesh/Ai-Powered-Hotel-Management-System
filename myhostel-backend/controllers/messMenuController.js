@@ -1,17 +1,31 @@
 import MessMenu from '../models/MessMenu.js';
 
-// Update or Create Menu for a day
+
 export const updateMenu = async (req, res) => {
     try {
-        const { day, breakfast, lunch, snacks, dinner } = req.body;
-        
+        const { 
+            day, breakfast, breakfastTime, 
+            lunch, lunchTime, snacks, snacksTime, 
+            dinner, dinnerTime, specialNote 
+        } = req.body;
+
+        const expiry = new Date();
+        expiry.setHours(23, 59, 59, 999); 
+
         const menu = await MessMenu.findOneAndUpdate(
             { day },
-            { breakfast, lunch, snacks, dinner, updatedBy: req.user.id },
+            { 
+                breakfast, breakfastTime, 
+                lunch, lunchTime, 
+                snacks, snacksTime, 
+                dinner, dinnerTime, 
+                specialNote,
+                expiresAt: expiry 
+            },
             { upsert: true, new: true }
         );
 
-        res.status(200).json({ message: `${day} menu updated! 📋`, menu });
+        res.status(200).json({ message: `${day} menu & timings updated!`, menu });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

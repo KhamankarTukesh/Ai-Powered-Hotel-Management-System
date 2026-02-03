@@ -8,7 +8,7 @@ import {
     clearOldTransactions,
     applyMessRebate,
     getMyFees,
-    exportFeeReport,
+    exportFeeCSV,
     getPendingVerifications
 } from '../controllers/feeController.js';
 import { protect, adminOnly } from '../middleware/authMiddleware.js';
@@ -38,5 +38,5 @@ router.get('/my-fees', protect, getMyFees);
 router.delete('/clear/:feeId', protect, adminOnly, clearOldTransactions);
 
 router.post('/apply-rebate', protect, adminOnly, applyMessRebate);
-router.get('/export-fees', protect, adminOnly, exportFeeReport); 
+router.get('/export-fees', protect, adminOnly,exportFeeCSV); 
 export default router;

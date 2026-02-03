@@ -115,39 +115,61 @@ export const requestRoomChange = async (req, res) => {
     }
 };
 
-// Warden Approve karega
-export const approveRoomChange = async (req, res) => {
+export const processRoomChange = async (req, res) => {
     try {
         const { requestId } = req.params;
+        const { action, wardenNote } = req.body; // action: 'approve' or 'reject'
+
         const request = await RoomRequest.findById(requestId);
-        if (!request || request.status !== 'Pending') return res.status(404).json({ message: "Valid request not found" });
+        if (!request) return res.status(404).json({ message: "Request not found" });
 
-        const oldRoom = await Room.findById(request.currentRoom);
-        const newRoom = await Room.findById(request.desiredRoom);
+        // 1. Set Warden Note and Start Timer
+        request.wardenNote = wardenNote || "";
+        request.processedAt = new Date(); // YAHAN SE 24 HOURS SHURU HOTE HAIN
 
-        // Check if new room has space
-        const freeBed = newRoom.beds.find(b => !b.isOccupied);
-        if (!freeBed) return res.status(400).json({ message: "New room is now full" });
+        if (action === 'approve') {
+            const oldRoom = await Room.findById(request.currentRoom);
+            const newRoom = await Room.findById(request.desiredRoom);
 
-        // 1. Purana bed khali karo
-        const oldBed = oldRoom.beds.find(b => b.studentId?.toString() === request.student.toString());
-        if (oldBed) {
-            oldBed.studentId = null;
-            oldBed.isOccupied = false;
+            const freeBed = newRoom.beds.find(b => !b.isOccupied);
+            if (!freeBed) return res.status(400).json({ message: "Desired room is full" });
+
+            // Bed Swap Logic
+            const oldBed = oldRoom.beds.find(b => b.studentId?.toString() === request.student.toString());
+            if (oldBed) { oldBed.studentId = null; oldBed.isOccupied = false; }
+            
+            freeBed.studentId = request.student;
+            freeBed.isOccupied = true;
+
+            request.status = 'Approved';
+            await oldRoom.save();
+            await newRoom.save();
+        } else {
+            // Rejection Logic
+            request.status = 'Rejected';
         }
 
-        // 2. Naya bed assign karo
-        freeBed.studentId = request.student;
-        freeBed.isOccupied = true;
-
-        request.status = 'Approved';
-
-        await oldRoom.save();
-        await newRoom.save();
+        // 2. Save the request with the timer
         await request.save();
 
-        res.status(200).json({ message: "Room changed successfully! 😊" });
+        res.status(200).json({ 
+            message: action === 'approve' ? "Room changed! 😊" : "Request rejected." 
+        });
+
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 };
+export const getPendingRequests = async (req, res) => {
+    try {
+        const pending = await RoomRequest.find({ status: 'Pending' })
+            .populate('student', 'fullName studentDetails') // Get name and roll no
+            .populate('currentRoom', 'roomNumber')         // Get old room number
+            .populate('desiredRoom', 'roomNumber')         // Get new room number
+            .sort({ createdAt: -1 });                      // Newest first
+
+        res.status(200).json(pending);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+}

@@ -9,36 +9,36 @@ const WardenFeeActions = () => {
   const [fetching, setFetching] = useState(true);
   const [stats, setStats] = useState({ totalStudents: 0, paidCount: 0, pendingCount: 0 });
 
-  // 1. Fetch FULL data from /fee/analytics to calculate summaries
 useEffect(() => {
-    const loadSummary = async () => {
-      try {
-        setFetching(true);
-        const { data } = await API.get("/fee/analytics");
-        
-        // 1. Total should only count students who actually have a fee record
-        const activeRecords = data.filter(s => s.status !== "Record Not Created");
-        
-        // 2. Paid count
-        const paid = activeRecords.filter(s => s.status === "Paid").length;
-        
-        // 3. Pending should be anything that isn't Paid but HAS a record
-        const pending = activeRecords.filter(s => s.status !== "Paid").length;
+  const loadSummary = async () => {
+    try {
+      setFetching(true);
+      const { data } = await API.get("/fee/analytics");
 
-        setStats({
-          totalStudents: activeRecords.length, // Shows actual records, not just student count
-          paidCount: paid,
-          pendingCount: pending
-        });
-      } catch (err) {
-        console.error("Data sync error", err);
-      } finally {
-        setFetching(false);
-      }
-    };
-    loadSummary();
-  }, []);
+      // 1. Total Students: Sirf wo jinka record Warden ne banaya hai
+      // (Rahul Sharma jaise students jinka status "Record Not Created" hai, wo count nahi honge)
+      const activeRecords = data.filter(s => s.status !== "Record Not Created");
 
+      // 2. Paid Count: Sirf wo jinhone pura paisa de diya hai
+      const paid = activeRecords.filter(s => s.status === "Paid").length;
+
+      // 3. Pending Dues: Isme 'Partially Paid', 'Unpaid', aur 'Pending Verification' teeno cover ho jayenge
+      // Kyunki ye teeno status "Paid" ke barabar nahi hain (!== "Paid")
+      const pending = activeRecords.filter(s => s.status !== "Paid").length;
+
+      setStats({
+        totalStudents: activeRecords.length, 
+        paidCount: paid,
+        pendingCount: pending
+      });
+    } catch (err) {
+      console.error("Data sync error", err);
+    } finally {
+      setFetching(false);
+    }
+  };
+  loadSummary();
+}, []);
   // 2. CSV Export Logic
   const handleExport = async () => {
     setLoading(true);
@@ -128,7 +128,7 @@ useEffect(() => {
             <button
               onClick={handleExport}
               disabled={loading || fetching}
-              className="group flex items-center gap-4 bg-white text-slate-900 px-12 py-6 rounded-2xl font-black uppercase tracking-widest hover:bg-orange-500 hover:text-white transition-all shadow-xl disabled:opacity-30"
+              className="group flex items-center gap-4 bg-orange-500 text-slate-900 px-12 py-6 rounded-2xl font-black uppercase tracking-widest hover:scale-105 transition-all shadow-xl disabled:opacity-30"
             >
               {loading ? (
                 <Loader2 className="animate-spin" size={24} />

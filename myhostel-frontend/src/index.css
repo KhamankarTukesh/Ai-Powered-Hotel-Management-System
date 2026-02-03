@@ -23,3 +23,10 @@
   0%, 90%, 100% { opacity: 0.1; transform: scale(1); }
   95% { opacity: 0.4; transform: scale(1.1); }
 }
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+.no-scrollbar {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+}

@@ -37,7 +37,11 @@ import WardenVerifyPayments from './warden/pages/wardenfeedashboard/WardenVerify
 import WardenFeeActions from './warden/pages/wardenfeedashboard/WardenFeeActions';
 import WardenManagement from './warden/pages/wardenfeedashboard/WardenManagement';
 import WardenFeeDashboard from './warden/pages/wardenfeedashboard/WardenFeeDashboard';
-
+import WardenLeaveManagement from './warden/pages/WardenLeaveManagement';
+import MessMenuEditor from './warden/pages/MessMenuEditor';
+import WardenNoticeManager from './warden/pages/WardenNoticeManager';
+import WardenRoomManager from './warden/pages/WardenRoomManager';
+import WardenRoomRequests from './warden/pages/RoomChangeRequests';
 
 const StudentLayout = () => {
   const navigate = useNavigate();
@@ -143,6 +147,11 @@ function App() {
           <Route path='/warden/actions' element={<WardenFeeActions/>}/>
           <Route path='/warden/management' element={<WardenManagement/>}/>
           <Route path='/warden/feedashboard' element={<WardenFeeDashboard/>}/>
+          <Route path='/warden/leave' element={<WardenLeaveManagement/>}/>
+          <Route path='/warden/menu' element={<MessMenuEditor/>}/>
+          <Route path='/warden/notices' element={<WardenNoticeManager/>}/>
+          <Route path='/warden/rooms' element={<WardenRoomManager/>}/>
+          <Route path="/warden/room-requests" element={<WardenRoomRequests />} />
         </Route>
 
         <Route path='/navbar-preview' element={<Navbar/>}/>

@@ -328,21 +328,7 @@ export const exportFeeCSV = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
-export const exportFeeReport = async (req, res) => {
-    try {
-        const fees = await Fee.find().populate('student', 'fullName email');
-        
-        
-        const fields = ['student.fullName', 'totalAmount', 'paidAmount', 'status', 'dueDate'];
-        const json2csvParser = new Parser({ fields });
-        const csv = json2csvParser.parse(fees);
-        res.header('Content-Type', 'text/csv');
-        res.attachment('Hostel_Fee_Report.csv');
-        return res.send(csv);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-};
+
 export const getPendingVerifications = async (req, res) => {
     try {
         // Sirf 'Pending Verification' wale records fetch kar rahe hain

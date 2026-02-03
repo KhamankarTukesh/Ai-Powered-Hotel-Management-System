@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 const leaveSchema = new mongoose.Schema({
     student: {
-        type: String,
+        type: mongoose.Schema.Types.ObjectId, // Fixed: ID ref ke liye ObjectId use karein
         ref: 'User',
         required: true
     },
@@ -23,8 +23,14 @@ const leaveSchema = new mongoose.Schema({
         enum: ['Pending', 'Approved', 'Rejected'],
         default: 'Pending'
     },
-    wardenNote: { type: String } // Warden agar kuch comment likhna chahe
+    wardenNote: { type: String },
+    // Auto-deletion ke liye expiry field
+    expiresAt: {
+        type: Date,
+        index: { expires: 0 } // TTL Index: Is waqt par record delete ho jayega
+    },
+    outpassUrl: { type: String } // Outpass link save karne ke liye
 }, { timestamps: true });
 
-const Leave = mongoose.model('Leave',leaveSchema);
+const Leave = mongoose.model('Leave', leaveSchema);
 export default Leave;

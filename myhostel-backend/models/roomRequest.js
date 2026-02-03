@@ -24,8 +24,16 @@ const roomRequestSchema = new mongoose.Schema({
         type: String,
         enum: ['Pending','Approved','Rejected'],
         default: 'Pending'
+    },
+    wardenNote: {
+        type: String,
+        default: ""
+    },
+    processedAt: { 
+        type: Date,
+        default: null // Only set this when approved or rejected
     }
 }, { timestamps: true });
-
+roomRequestSchema.index({ "processedAt": 1 }, { expireAfterSeconds: 86400 });
 
 export default mongoose.model('RoomRequest',roomRequestSchema);

@@ -42,16 +42,22 @@ export const updateLeaveStatus = async (req, res) => {
         const { id } = req.params;
         const { status, wardenNote } = req.body;
 
-        // 1. Pehle basic update karo
+        const leaveToUpdate = await Leave.findById(id);
+        if (!leaveToUpdate) return res.status(404).json({ message: "Leave not found" });
+
+        // 1. Expiry Calculation (Next day 6 PM)
+        const expiryDate = new Date(leaveToUpdate.endDate);
+        expiryDate.setDate(expiryDate.getDate() + 1); 
+        expiryDate.setHours(18, 0, 0, 0); 
+
+        // 2. Database Update (Sabse pehle status update kar dein taaki UI fast respond kare)
         let updatedLeave = await Leave.findByIdAndUpdate(
             id,
-            { status, wardenNote },
+            { status, wardenNote, expiresAt: expiryDate },
             { new: true }
         ).populate('student', 'fullName studentDetails.rollNumber');
 
-        if (!updatedLeave) return res.status(404).json({ message: "Leave not found" });
-
-        // 2. AGAR Status 'Approved' hai, toh PDF banao aur Cloudinary pe daalo
+        // 3. AGAR 'Approved' hai, toh background mein PDF bana kar Cloudinary pe daalo
         if (status === 'Approved') {
             const doc = new PDFDocument({ size: 'A6', margin: 30 });
             let buffers = [];
@@ -60,38 +66,36 @@ export const updateLeaveStatus = async (req, res) => {
             doc.on('end', async () => {
                 const pdfBuffer = Buffer.concat(buffers);
                 try {
-                    // Cloudinary upload
                     const result = await uploadPDFToCloudinary(pdfBuffer);
                     
-                    // Database mein link save karo
+                    // Background save: Student ab apni app se ye link dekh payega
                     updatedLeave.outpassUrl = result.secure_url;
                     await updatedLeave.save();
-
-                    // Final response send karo
-                    return res.status(200).json({ 
-                        message: "Leave Approved & Outpass Generated!", 
-                        outpassUrl: updatedLeave.outpassUrl,
-                        updatedLeave 
-                    });
+                    console.log("Outpass uploaded to Cloudinary:", result.secure_url);
                 } catch (err) {
-                    console.error("Cloudinary Error:", err);
+                    console.error("Cloudinary Background Error:", err);
                 }
             });
 
-            // --- PDF ka Content ---
+            // PDF Content (Wahi purana logic)
             doc.fontSize(14).text('DIGITAL OUTPASS', { align: 'center', underline: true });
             doc.moveDown();
             doc.fontSize(10).text(`Name: ${updatedLeave.student.fullName}`);
-            doc.text(`Roll No: ${updatedLeave.student.studentDetails.rollNumber}`);
-            doc.text(`Dates: ${updatedLeave.startDate.toDateString()} - ${updatedLeave.endDate.toDateString()}`);
+            doc.text(`Roll No: ${updatedLeave.student.studentDetails?.rollNumber || 'N/A'}`);
+            doc.text(`Dates: ${new Date(updatedLeave.startDate).toDateString()} - ${new Date(updatedLeave.endDate).toDateString()}`);
             doc.moveDown();
-            doc.text(`Status: ${status}`, { color: 'green' });
-            doc.text(`Note: ${wardenNote || 'N/A'}`);
+            doc.fillColor('green').text(`Status: APPROVED`);
+            doc.fillColor('black').text(`Note: ${wardenNote || 'N/A'}`);
             doc.end();
+
+            // 4. IMPORTANT: Warden ko sirf JSON response bhejo, PDF file nahi
+            return res.status(200).json({ 
+                message: "Leave status updated successfully!", 
+                updatedLeave 
+            });
             
         } else {
-            // Agar Rejected ya Pending hai toh seedha response
-            res.status(200).json({ message: `Leave ${status}`, updatedLeave });
+            return res.status(200).json({ message: `Leave ${status}`, updatedLeave });
         }
 
     } catch (error) {
