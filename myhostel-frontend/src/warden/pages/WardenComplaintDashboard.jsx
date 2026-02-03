@@ -5,6 +5,8 @@ import API from '../../api/axios';
 const WardenComplaintDashboard = () => {
     const [complaints, setComplaints] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [aiInsight, setAiInsight] = useState("");
+const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const [filterPriority, setFilterPriority] = useState("");
     const [selectedComplaint, setSelectedComplaint] = useState(null);
@@ -72,7 +74,19 @@ const WardenComplaintDashboard = () => {
             toast.error(error.response?.data?.message || "Delete failed");
         }
     };
-
+const analyzeWithAI = async () => {
+    if (complaints.length === 0) return toast.error("No complaints to analyze!");
+    try {
+        setIsAnalyzing(true);
+        setAiInsight(""); 
+        const feedbackList = complaints.map(c => `${c.title}: ${c.description}`);
+        const { data } = await API.post('/ai/analyze-feedback', { feedbackList, type: 'Maintenance' });
+        setAiInsight(data.aiInsight);
+        toast.success("AI Analysis Complete!");
+    } catch (error) {
+        toast.error("AI Analysis failed.");
+    } finally { setIsAnalyzing(false); }
+};
     // 4. Client-side Search & Filter
     const filteredComplaints = complaints.filter(item => {
         const matchesSearch = item.title.toLowerCase().includes(searchQuery.toLowerCase());
@@ -92,9 +106,26 @@ const WardenComplaintDashboard = () => {
   <p className="text-xl italic text-gray-500 mt-2">
     Hostel management, <span className="text-[#ff6b00] font-semibold">simplified.</span>
   </p>
+  <button 
+    onClick={analyzeWithAI}
+    disabled={isAnalyzing}
+    className="mt-4 bg-black text-white px-6 py-3 rounded-2xl font-black flex items-center gap-2 hover:bg-[#ff6b00] transition-all disabled:opacity-50"
+>
+    {isAnalyzing ? "⌛ ANALYZING..." : "✨ GET AI INSIGHTS"}
+</button>
 </div>
 
-
+{aiInsight && (
+    <div className="col-span-1 md:col-span-12 bg-orange-50 border-2 border-orange-200 rounded-[2rem] p-6 mb-4 relative shadow-inner">
+        <button onClick={() => setAiInsight("")} className="absolute top-4 right-4 font-bold text-orange-400">✕</button>
+        <h2 className="text-orange-600 font-black italic mb-2 uppercase text-xs tracking-widest flex items-center gap-2">
+            <span>✨</span> AI Warden Summary
+        </h2>
+        <p className="text-gray-700 font-medium whitespace-pre-line leading-relaxed italic">
+            {aiInsight}
+        </p>
+    </div>
+)}
                 {/* Stats Cards */}
 <div className="col-span-1 md:col-span-4 flex justify-center items-center bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100 flex flex-col gap-4 w-full">
   <div className="w-12 h-12 rounded-2xl bg-orange-50 flex items-center justify-center text-[#ff6b00]">

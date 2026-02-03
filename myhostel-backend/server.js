@@ -41,7 +41,7 @@ app.use('/api/notice',noticeRoutes);
 app.use('/api/gatepass',gateRoutes);
 app.use('/api/fee',feeRoutes);
 app.use('/api/mess', messRoutes);
-app.use('/api/activities', activityRoutes);
+app.use('/api/activity', activityRoutes);
 app.use('/api/users', studentRoutes);
 app.use('/api/notifications', notificationRoutes);
 

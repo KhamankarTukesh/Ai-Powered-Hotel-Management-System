@@ -6,19 +6,26 @@ import Attendance from '../models/Attendance.js';
 import MessActivity from '../models/MessActivity.js'; 
 import OpenAI from 'openai';
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const openai = new OpenAI({ 
+    apiKey: process.env.OPENAI_API_KEY, // Aapka .env wala name
+    baseURL: "https://openrouter.ai/api/v1" 
+});
+
 export const getDashboardSummary = async (req, res) => {
     try {
         // 1. Basic Stats
         const totalStudents = await User.countDocuments({ role: 'student' });
         const pendingComplaintsCount = await Complaint.countDocuments({ status: 'Pending' });
         
-        // 2. Financials
+        // 2. Financials (Optimized for AI context window)
         const dueFees = await Fee.find({ status: { $in: ['Unpaid', 'Partially Paid'] } })
                                  .populate('student', 'fullName');
-        const feeSummary = dueFees.map(f => `${f.student?.fullName || 'Unknown'}: ₹${f.totalAmount - f.paidAmount}`).join(", ");
+        
+        const totalDueAmount = dueFees.reduce((acc, f) => acc + (f.totalAmount - f.paidAmount), 0);
+        // AI ko summary dene ke liye short list
+        const feeSummary = dueFees.slice(0, 5).map(f => `${f.student?.fullName}: ₹${f.totalAmount - f.paidAmount}`).join(", ");
 
-        // 3. Hostel Attendance (Using Attendance Model) ✅
+        // 3. Hostel Attendance Today
         const startOfDay = new Date();
         startOfDay.setHours(0, 0, 0, 0);
         const endOfDay = new Date();
@@ -32,8 +39,8 @@ export const getDashboardSummary = async (req, res) => {
         const absentInHostel = hostelAttendanceToday.filter(a => a.status === 'Absent').length;
         const onLeave = hostelAttendanceToday.filter(a => a.status === 'Leave').length;
 
-        // 4. Mess Stats (Using MessActivity Model)
-        const todayStr = new Date().toISOString().split('T')[0];
+        // 4. Mess Stats (Fixed Local Date Bug)
+        const todayStr = new Date().toLocaleDateString('en-CA'); // "YYYY-MM-DD"
         const messStats = await MessActivity.find({ date: todayStr });
         const mealsTaken = messStats.length;
 
@@ -44,23 +51,24 @@ export const getDashboardSummary = async (req, res) => {
         }).limit(5);
         const complaintTexts = urgentComplaints.map(c => `[${c.category}]: ${c.description}`).join("; ");
 
-        // 6. OpenAI Analysis (Updated prompt with Hostel Attendance)
+        // 6. OpenAI/OpenRouter Analysis (Updated for Mistral)
         const completion = await openai.chat.completions.create({
-            model: "gpt-4o-mini", 
+            model: "mistralai/mistral-7b-instruct", // Mistral model use ho raha hai
             messages: [
                 { 
                     role: "system", 
-                    content: "You are a Hostel Warden AI. Summarize 1. Financial Health, 2. Occupancy/Attendance Issues, 3. Urgent Actions." 
+                    content: "You are a Hostel Warden AI. Summarize financials, attendance issues, and urgent actions in 3 short bullet points." 
                 },
                 { 
                     role: "user", 
-                    content: `Stats: Students: ${totalStudents}. 
-                              Hostel Attendance: ${presentInHostel} Present, ${onLeave} on Leave. 
+                    content: `Stats: Total Students: ${totalStudents}. 
+                              Today's Attendance: ${presentInHostel} Present, ${onLeave} Leave. 
                               Mess: ${mealsTaken} meals served. 
-                              Fees Due: ${feeSummary || "None"}. 
+                              Financials: ₹${totalDueAmount} total due (${feeSummary}). 
                               Urgent Complaints: ${complaintTexts || "None"}.` 
                 }
             ],
+            temperature: 0.2
         });
 
         res.status(200).json({
@@ -73,13 +81,14 @@ export const getDashboardSummary = async (req, res) => {
                     leave: onLeave
                 },
                 messMealsToday: mealsTaken,
-                totalPendingFees: dueFees.length
+                totalPendingFeesAmount: totalDueAmount
             },
             aiAnalysis: completion.choices[0].message.content,
             status: "Dashboard Data Loaded ✅"
         });
 
     } catch (error) {
+        console.error("Dashboard Error:", error);
         res.status(500).json({ error: "Dashboard Error: " + error.message });
     }
 };

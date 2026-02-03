@@ -1,5 +1,6 @@
 import Room from "../models/Room.js";
 import RoomRequest from "../models/roomRequest.js";
+import { createNotification } from '../utils/notify.js';
 
 export const addRoom = async (req, res) => {
     try {
@@ -144,6 +145,12 @@ export const processRoomChange = async (req, res) => {
             request.status = 'Approved';
             await oldRoom.save();
             await newRoom.save();
+
+            const msg = action === 'approve' 
+        ? "Your room change request is Approved! Check your new room. ✅" 
+        : "Room change request was Rejected. Contact Warden for details. ❌";
+
+    await createNotification(request.student, msg);
         } else {
             // Rejection Logic
             request.status = 'Rejected';

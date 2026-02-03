@@ -29,10 +29,9 @@ export const getAllNotifications = async (req, res) => {
 // 3. Mark As Read (Jab student ghanti par click kare)
 export const markAsRead = async (req, res) => {
     try {
-        const { id } = req.params; // Notification ki ID URL se milegi
-        await Notification.findByIdAndUpdate(id, { isRead: true });
-        
-        res.status(200).json({ message: "Notification marked as read" });
+        const { id } = req.params;
+        await Notification.findByIdAndDelete(id); // Simple delete!
+        res.status(200).json({ message: "Notification cleared from database" });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

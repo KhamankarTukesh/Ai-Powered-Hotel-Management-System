@@ -42,6 +42,9 @@ import MessMenuEditor from './warden/pages/MessMenuEditor';
 import WardenNoticeManager from './warden/pages/WardenNoticeManager';
 import WardenRoomManager from './warden/pages/WardenRoomManager';
 import WardenRoomRequests from './warden/pages/RoomChangeRequests';
+import WardenGatePassPortal from './warden/pages/WardenGatePassPortal';
+import WardenMessActivity from './warden/pages/WardenMessActivity';
+import StudentActivity from './warden/pages/StudentActivity';
 
 const StudentLayout = () => {
   const navigate = useNavigate();
@@ -152,6 +155,9 @@ function App() {
           <Route path='/warden/notices' element={<WardenNoticeManager/>}/>
           <Route path='/warden/rooms' element={<WardenRoomManager/>}/>
           <Route path="/warden/room-requests" element={<WardenRoomRequests />} />
+          <Route path="/warden/gate-pass" element={<WardenGatePassPortal />} />
+          <Route path="/warden/mess/activity" element={<WardenMessActivity />} />
+          <Route path="/warden/student-activity" element={<StudentActivity />} />
         </Route>
 
         <Route path='/navbar-preview' element={<Navbar/>}/>

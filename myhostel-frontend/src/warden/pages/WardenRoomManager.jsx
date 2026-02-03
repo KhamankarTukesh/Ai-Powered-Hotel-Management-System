@@ -9,8 +9,8 @@ import {
   Bed,
   CheckCircle2,
   LayoutGrid,
-   ArrowLeftRight,
-   ChevronLeft
+  ArrowLeftRight,
+  ChevronLeft
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
@@ -20,8 +20,10 @@ const WardenRoomManager = () => {
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+  const [isSuggesting, setIsSuggesting] = useState(false);
+  const [aiRecommendation, setAiRecommendation] = useState(null);
 
-   const navigate = useNavigate();
+  const navigate = useNavigate();
   // Form State
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRoom, setSelectedRoom] = useState(null);
@@ -40,6 +42,32 @@ const WardenRoomManager = () => {
       toast.error("Failed to fetch data");
     } finally {
       setLoading(false);
+    }
+  };
+  const getAiRoomSuggestion = async () => {
+    // Pehle check karein ki student select hua hai ya nahi
+    const studentObj = students.find(s => s.student?.fullName === searchQuery);
+    if (!studentObj) return toast.error("Please select a student from the list first!");
+
+    setIsSuggesting(true);
+    try {
+      const { data } = await API.post('/ai/suggest-room', {
+        studentId: studentObj.student._id
+      });
+
+      if (data.success) {
+        setAiRecommendation(data.recommendation);
+        // Auto-select suggested room logic
+        const suggestedRoom = rooms.find(r => r._id === data.recommendation.roomId);
+        if (suggestedRoom) {
+          setSelectedRoom(suggestedRoom);
+          toast.success("AI suggested a perfect room!");
+        }
+      }
+    } catch (err) {
+      toast.error("AI could not find a recommendation");
+    } finally {
+      setIsSuggesting(false);
     }
   };
 
@@ -88,6 +116,7 @@ const WardenRoomManager = () => {
       setIsSelected(false);
       setSelectedRoom(null);
       setSelectedBed('');
+      setAiRecommendation(null);
 
       // 6. Refresh Data
       fetchData();
@@ -225,6 +254,37 @@ const WardenRoomManager = () => {
                     </div>
                   </div>
                 )}
+                {/* AI Suggestion Section */}
+                {isSelected && (
+                  <div className="space-y-3 pt-2">
+                    {!aiRecommendation ? (
+                      <button
+                        type="button"
+                        onClick={getAiRoomSuggestion}
+                        disabled={isSuggesting}
+                        className="w-full py-3 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase flex items-center justify-center gap-2 hover:bg-orange-600 transition-all shadow-lg"
+                      >
+                        {isSuggesting ? <Loader2 className="animate-spin" size={14} /> : "✨ Get AI Suggestion"}
+                      </button>
+                    ) : (
+                      <div className="p-4 bg-blue-50 border border-blue-100 rounded-2xl animate-in zoom-in duration-300">
+                        <div className="flex items-center gap-2 text-blue-600 mb-1">
+                          <CheckCircle2 size={14} />
+                          <p className="text-[10px] font-black uppercase tracking-widest">AI Recommendation</p>
+                        </div>
+                        <p className="text-[11px] font-bold text-slate-700 leading-tight">
+                          {aiRecommendation.reason}
+                        </p>
+                        <button
+                          onClick={() => setAiRecommendation(null)}
+                          className="text-[9px] text-blue-400 font-bold mt-2 hover:underline"
+                        >
+                          Reset Suggestion
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 <button
                   type="submit"
@@ -238,25 +298,25 @@ const WardenRoomManager = () => {
 
 
             </div>
-                          
- <div className="bg-white p-5 rounded-[2rem] shadow-xl border border-orange-50 mt-4 flex items-center justify-between">
-  <div className="flex items-center gap-4">
-    <div className="p-3 bg-orange-50 rounded-2xl text-orange-500">
-      <ArrowLeftRight size={20} />
-    </div>
-    <div>
-      <h3 className="text-xs font-black text-slate-800 uppercase italic">Room Requests</h3>
-      <p className="text-[9px] font-bold text-orange-500 uppercase tracking-widest">Pending Approvals</p>
-    </div>
-  </div>
 
-  <button 
-    onClick={() => navigate('/warden/room-requests')}
-    className=" text-white px-5 py-3 rounded-xl text-[10px] font-black uppercase tracking-tighter hover:scale-105 bg-orange-500 transition-all shadow-md active:scale-95"
-  >
-    Open Portal
-  </button>
-</div>
+            <div className="bg-white p-5 rounded-[2rem] shadow-xl border border-orange-50 mt-4 flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-orange-50 rounded-2xl text-orange-500">
+                  <ArrowLeftRight size={20} />
+                </div>
+                <div>
+                  <h3 className="text-xs font-black text-slate-800 uppercase italic">Room Requests</h3>
+                  <p className="text-[9px] font-bold text-orange-500 uppercase tracking-widest">Pending Approvals</p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => navigate('/warden/room-requests')}
+                className=" text-white px-5 py-3 rounded-xl text-[10px] font-black uppercase tracking-tighter hover:scale-105 bg-orange-500 transition-all shadow-md active:scale-95"
+              >
+                Open Portal
+              </button>
+            </div>
           </div>
 
           {/* Right: Room Grid */}

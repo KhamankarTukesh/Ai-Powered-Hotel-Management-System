@@ -2,69 +2,75 @@ import OpenAI from 'openai';
 import Room from '../models/Room.js';
 import User from '../models/User.js';
 
+// OpenRouter configuration with your existing .env name
 const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY
+    apiKey: process.env.OPENAI_API_KEY, 
+    baseURL: "https://openrouter.ai/api/v1", // Yeh dalna zaroori hai OpenRouter ke liye
+    defaultHeaders: {
+        "HTTP-Referer": "http://localhost:5173", // Optional but good practice
+        "X-Title": "Dnyanda Hostel"
+    }
 });
-
-export const analyzeMessFeedback = async (req, res) => {
+export const analyzeHostelComplaints = async (req, res) => {
     try {
-        const { feedbackList } = req.body;
+        const { feedbackList, type } = req.body; // 'type' can be 'Mess' or 'Maintenance'
 
         if (!Array.isArray(feedbackList) || feedbackList.length === 0) {
-            return res.status(400).json({ error: "Feedback list is required" });
+            return res.status(400).json({ error: "No complaints found to analyze" });
         }
 
+        const feedbackTexts = feedbackList.map(f => f.comment || f.description || f);
 
         const prompt = `
-            Analyze these hostel complaints and categorize them for the Warden:
-            Complaints: ${feedbackTexts.join(", ")}
+            You are the AI Assistant for Dnyanda Hostel Warden. 
+            Analyze the following ${type || 'General'} complaints:
+            
+            Complaints List: ${feedbackTexts.join(" | ")}
 
-            Task: 
-            1. Identify if there are any immediate safety risks (like fire, sparks,Water Leakage, or medical).
-            2. Summarize the overall maintenance mood.
-            3. If there is an 'Urgent' issue like sparks or smoke, start the response with "🚨 RED ALERT:".`;
+            Tasks:
+            1. Categorize: Group them into Food Quality, Infrastructure, or Safety.
+            2. Risk Assessment: If you detect fire, electricity sparks, severe water leakage, or medical emergencies, start with "🚨 RED ALERT:".
+            3. Sentiment: Tell the Warden if the students are generally 'Frustrated', 'Satisfied', or 'Angry'.
+            4. Action Plan: Give 1-2 bullet points on what the Warden should do first.
+
+            Keep the summary professional, sharp, and helpful.`;
 
         const response = await openai.chat.completions.create({
-            model: "gpt-4o-mini",
+            model: "mistralai/mistral-7b-instruct",
             messages: [{ role: "user", content: prompt }],
-            temperature: 0.3
+            temperature: 0.1
         });
 
-        const text = response.choices[0].message.content;
+        res.status(200).json({ aiInsight: response.choices[0].message.content });
 
-        res.status(200).json({ aiInsight: text });
     } catch (error) {
+        console.error("AI Analysis Error:", error);
         res.status(500).json({ error: error.message });
     }
 };
-
-
-
-
 export const suggestRoomAI = async (req, res) => {
     try {
         const { studentId } = req.body;
 
-        // 1. Student ki details lao (Especially Department)
         const student = await User.findById(studentId);
         if (!student) return res.status(404).json({ message: "Student not found" });
 
-        const studentDept = student.studentDetails.department;
+        // Department check logic
+        const studentDept = student.studentDetails?.department;
 
-        // 2. Saare rooms lao jo khali (Available) hain
         const availableRooms = await Room.find({ status: 'Available' }).populate('beds.studentId');
 
         if (availableRooms.length === 0) {
             return res.status(404).json({ message: "No vacant rooms available!" });
         }
 
-        // 3. AI/Matching Logic: Same department wala room dhoondo
         let suggestedRoom = null;
         let reason = "";
 
+        // logic to match department
         for (let room of availableRooms) {
             const hasSameDeptStudent = room.beds.some(bed => 
-                bed.studentId && bed.studentId.studentDetails.department === studentDept
+                bed.studentId && bed.studentId.studentDetails?.department === studentDept
             );
 
             if (hasSameDeptStudent) {
@@ -74,14 +80,10 @@ export const suggestRoomAI = async (req, res) => {
             }
         }
 
-        // 4. Agar koi match nahi mila, toh pehla khali room de do
         if (!suggestedRoom) {
             suggestedRoom = availableRooms[0];
             reason = "Recommended this room as it's currently vacant and peaceful.";
         }
-
-        // Alert look for testing
-        console.log(`🤖 AI Suggestion for ${student.fullName}: ${suggestedRoom.roomNumber}`);
 
         res.status(200).json({
             success: true,

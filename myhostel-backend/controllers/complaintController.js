@@ -45,7 +45,7 @@ Response format:
     const response = await openai.chat.completions.create({
      model: "mistralai/mistral-7b-instruct",
       messages: [{ role: "user", content: prompt }],
-      temperature: 0
+      temperature: 0.1
     });
 
     // 🔹 Parse AI response safely
