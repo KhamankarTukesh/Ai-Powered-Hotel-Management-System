@@ -30,7 +30,8 @@ app.use(express.json());
 app.use(cors({
   origin: [
     "http://localhost:5173",              // 🧪 Local Vite frontend (development)
-    "https://ai-hostel-system.vercel.app" // 🌍 Deployed frontend (Vercel - production)
+    "https://ai-powered-hotel-management-system-53jxavove.vercel.app" ,
+    "ai-powered-hotel-management-system-seven.vercel.app"
   ],
   credentials: true                      // 🍪 Cookies / JWT allow
 }));
