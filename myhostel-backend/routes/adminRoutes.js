@@ -1,10 +1,11 @@
 import express from 'express';
-import { getDashboardSummary } from '../controllers/adminController.js';
+import {getWardenDashboardSummary,getWardenAIInsight} from '../controllers/adminController.js'
 import { protect, adminOnly } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
-router.get('/summary', protect, adminOnly, getDashboardSummary);
+router.get('/dashboard-summary', protect,adminOnly,getWardenDashboardSummary);
+router.get('/dashboard-ai-insight',protect,adminOnly, getWardenAIInsight);
 
 
 export default router;

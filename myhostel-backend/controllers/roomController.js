@@ -37,10 +37,13 @@ export const addRoom = async (req, res) => {
 // 2. GET ALL ROOMS (With Populated Student Data)
 export const getAllRooms = async (req, res) => {
     try {
-        const rooms = await Room.find().populate({
-            path: 'beds.studentId', // Naya path kyunki beds array ke andar hai
-            select: 'fullName email studentDetails.rollNumber studentDetails.department'
-        });
+        const rooms = await Room.find()
+            .populate({
+                path: 'beds.studentId',
+                select: 'fullName email studentDetails.rollNumber studentDetails.department'
+            })
+            .sort({ block: 1, roomNumber: 1 }); // 1 matlab Ascending Order (Chote se Bada)
+
         res.status(200).json(rooms);
     } catch (error) {
         res.status(500).json({ message: "Server Error", error: error.message });

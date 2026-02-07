@@ -6,9 +6,11 @@ import {
 } from 'lucide-react';
 import { register } from '../services/auth.services.js';
 import { useNavigate, Link } from 'react-router-dom';
+import toast from 'react-hot-toast';
 
 const Register = () => {
     const navigate = useNavigate();
+    const [loading, setLoading] = useState(false);
     const [image, setImage] = useState(null);
     const [formData, setFormData] = useState({
         fullName: '', email: '', password: '',
@@ -18,30 +20,40 @@ const Register = () => {
 
     const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
-    const handleRegister = async (e) => {
-        e.preventDefault();
-        const data = new FormData();
 
-        data.append('fullName', formData.fullName);
-        data.append('email', formData.email);
-        data.append('password', formData.password);
-        data.append('studentDetails[rollNumber]', formData.rollNumber);
-        data.append('studentDetails[department]', formData.department);
-        data.append('studentDetails[phone]', formData.phone);
-        data.append('studentDetails[course]', formData.course);
-        data.append('studentDetails[batch]', formData.batch);
-        data.append('studentDetails[currentYear]', formData.currentYear);
 
-        if (image) data.append('idCardImage', image);
+const handleRegister = async (e) => {
+    e.preventDefault();
+    setLoading(true); // Start Loading
+    const data = new FormData();
 
-        try {
-            await register(data);
-            alert('Registration Successful! Check your email for OTP.');
-            navigate('/verify-otp', { state: { email: formData.email } });
-        } catch (err) {
-            alert(err.response?.data?.message || 'Registration Failed');
-        }
-    };
+    // Direct fields
+    data.append('fullName', formData.fullName);
+    data.append('email', formData.email);
+    data.append('password', formData.password);
+    
+    // Nested fields (consistent with your controller)
+    data.append('studentDetails[rollNumber]', formData.rollNumber);
+    data.append('studentDetails[department]', formData.department);
+    data.append('studentDetails[phone]', formData.phone);
+    data.append('studentDetails[course]', formData.course);
+    data.append('studentDetails[batch]', formData.batch);
+    data.append('studentDetails[currentYear]', formData.currentYear);
+
+    if (image) data.append('idCardImage', image);
+
+    try {
+        await register(data);
+        toast.success('Registration Successful! Check your email for OTP.');
+        navigate('/verify-otp', { state: { email: formData.email } });
+    } catch (err) {
+        // Clearer error handling
+        const errorMsg = err.response?.data?.message || 'Registration Failed. Please try again.';
+        toast.error(errorMsg);
+    } finally {
+        setLoading(false); // Stop Loading
+    }
+};
 
     return (
         <div className="min-h-screen bg-[#f8f7f5] flex items-center justify-center p-6 font-['Inter']">
@@ -158,9 +170,15 @@ const Register = () => {
                     </div>
 
                     <div className="flex flex-col items-center gap-5 pt-4">
-                        <button type="submit" className="w-full max-w-[400px] h-14 bg-[#f97415] text-white rounded-full text-lg font-bold shadow-lg shadow-orange-100 hover:bg-[#ea580c] transition-all transform active:scale-95 flex items-center justify-center gap-2">
-                            Create Account <ArrowRight size={20} />
-                        </button>
+                   <button 
+    type="submit" 
+    disabled={loading}
+    className={`w-full max-w-[400px] h-14 rounded-full text-lg font-bold flex items-center justify-center gap-2 transition-all ${loading ? 'bg-slate-400' : 'bg-[#f97415] hover:bg-[#ea580c] shadow-lg shadow-orange-100'}`}
+>
+    {loading ? 'Processing...' : (
+        <>Create Account <ArrowRight size={20} /></>
+    )}
+</button>
 
                         <p className="text-[#8c725f] text-sm">
                             Already have an account? <Link to="/login" className="text-[#f97415] font-bold hover:underline">Login here</Link>

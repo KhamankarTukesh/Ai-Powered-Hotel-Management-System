@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 
 const DashboardHeader = ({ profile }) => {
     const navigate = useNavigate();
-
+console.log(profile);
     // Greeting logic based on time
     const getGreeting = () => {
         const hour = new Date().getHours();

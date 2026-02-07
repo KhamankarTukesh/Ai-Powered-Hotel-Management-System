@@ -1,169 +1,188 @@
-import React,{ useState , useEffect} from 'react'
-import { BrowserRouter as Router, Routes, Route, Outlet ,useNavigate, useLocation} from 'react-router-dom'
-import { Home } from 'lucide-react';
-import { Toaster } from 'react-hot-toast';
-import Login from './auth/pages/Login'
-import Register from './auth/pages/Register'
-import VerifyOTP from './auth/pages/VerifyOTP'
-import ForgotPassword from './auth/pages/ForgotPassword'
-import ResetPassword from './auth/pages/ResetPassword'
+import React, { useState, useEffect } from "react";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Outlet,
+  useNavigate,
+  useLocation,
+  Navigate,
+} from "react-router-dom";
+import { Home } from "lucide-react";
+import { Toaster } from "react-hot-toast";
 
-import RoomDetails from './student/pages/RoomDetails'
-import Notices from './student/pages/Notices'
-import MessPanel from './student/pages/MessPanel'
-import StudentActions from './student/pages/StudentActions'
-import LeaveManagement from './student/pages/LeaveManagement'
-import StudentComplaints from './student/pages/StudentComplaints'
-import FeesPage from './student/pages/FeesPage'
-import AttendanceAnalytics from './student/pages/AttendanceAnalytics'
-import GatePassManager from './student/pages/GatePassManager'
-import ActivityHistory from './student/pages/ActivityHistory'
-import StudentProfile from './student/pages/StudentProfile'
-import Navbar from './student/services/Navbar'
-import StudentDashboard from './student/pages/StudentDashboard'
-import Settings from './student/pages/Settings';
-import ProtectedRoute from './auth/guards/ProtectedRoute'
-import API from './api/axios';
+/* ================= COMPONENTS ================= */
+import Footer from "./auth/components/Footer"; 
+import Navbar from "./student/services/Navbar";
 
+/* ================= AUTH ================= */
+import Login from "./auth/pages/Login";
+import Register from "./auth/pages/Register";
+import VerifyOTP from "./auth/pages/VerifyOTP";
+import ForgotPassword from "./auth/pages/ForgotPassword";
+import ResetPassword from "./auth/pages/ResetPassword";
+import ProtectedRoute from "./auth/guards/ProtectedRoute";
 
+/* ================= STUDENT ================= */
+import StudentDashboard from "./student/pages/StudentDashboard";
+import RoomDetails from "./student/pages/RoomDetails";
+import Notices from "./student/pages/Notices";
+import MessPanel from "./student/pages/MessPanel";
+import StudentActions from "./student/pages/StudentActions";
+import LeaveManagement from "./student/pages/LeaveManagement";
+import StudentComplaints from "./student/pages/StudentComplaints";
+import FeesPage from "./student/pages/FeesPage";
+import AttendanceAnalytics from "./student/pages/AttendanceAnalytics";
+import GatePassManager from "./student/pages/GatePassManager";
+import ActivityHistory from "./student/pages/ActivityHistory";
+import StudentProfile from "./student/pages/StudentProfile";
+import Settings from "./student/pages/Settings";
 
+/* ================= WARDEN ================= */
+import WardenDashboard from "./warden/WardenDashboard";
+import MarkAttendance from "./warden/pages/MarkAttendance";
+import WardenComplaintDashboard from "./warden/pages/WardenComplaintDashboard";
+import CreateFee from "./warden/pages/wardenfeedashboard/CreateFee";
+import WardenVerifyPayments from "./warden/pages/wardenfeedashboard/WardenVerifyPayments";
+import WardenFeeActions from "./warden/pages/wardenfeedashboard/WardenFeeActions";
+import WardenManagement from "./warden/pages/wardenfeedashboard/WardenManagement";
+import WardenFeeDashboard from "./warden/pages/wardenfeedashboard/WardenFeeDashboard";
+import WardenLeaveManagement from "./warden/pages/WardenLeaveManagement";
+import MessMenuEditor from "./warden/pages/MessMenuEditor";
+import WardenNoticeManager from "./warden/pages/WardenNoticeManager";
+import WardenRoomManager from "./warden/pages/WardenRoomManager";
+import WardenRoomRequests from "./warden/pages/RoomChangeRequests";
+import WardenGatePassPortal from "./warden/pages/WardenGatePassPortal";
+import WardenMessActivity from "./warden/pages/WardenMessActivity";
+import StudentActivity from "./warden/pages/StudentActivity";
 
-
-//warden
-import MarkAttendance from './warden/pages/MarkAttendance';
-import WardenComplaintDashboard from './warden/pages/WardenComplaintDashboard';
-import CreateFee from './warden/pages/wardenfeedashboard/CreateFee';
-import WardenVerifyPayments from './warden/pages/wardenfeedashboard/WardenVerifyPayments';
-import WardenFeeActions from './warden/pages/wardenfeedashboard/WardenFeeActions';
-import WardenManagement from './warden/pages/wardenfeedashboard/WardenManagement';
-import WardenFeeDashboard from './warden/pages/wardenfeedashboard/WardenFeeDashboard';
-import WardenLeaveManagement from './warden/pages/WardenLeaveManagement';
-import MessMenuEditor from './warden/pages/MessMenuEditor';
-import WardenNoticeManager from './warden/pages/WardenNoticeManager';
-import WardenRoomManager from './warden/pages/WardenRoomManager';
-import WardenRoomRequests from './warden/pages/RoomChangeRequests';
-import WardenGatePassPortal from './warden/pages/WardenGatePassPortal';
-import WardenMessActivity from './warden/pages/WardenMessActivity';
-import StudentActivity from './warden/pages/StudentActivity';
-
-const StudentLayout = () => {
+/* ================= REUSABLE BACK BUTTON ================= */
+const BackButton = () => {
   const navigate = useNavigate();
+  return (
+    <button
+      onClick={() => navigate(-1)}
+      className="fixed bottom-8 right-8 z-[999] flex items-center gap-3 bg-slate-900 text-white pl-4 pr-6 py-4 rounded-[2rem] hover:bg-slate-800 transition-all shadow-lg active:scale-95"
+    >
+      <div className="size-10 bg-[#f97415] rounded-2xl flex items-center justify-center">
+        <Home size={20} />
+      </div>
+      <span className="font-bold uppercase tracking-widest text-[10px]">Back</span>
+    </button>
+  );
+};
+
+const getUserProfile = () => {
+  const savedUser = localStorage.getItem("user");
+  if (!savedUser) return null;
+  try {
+    return JSON.parse(savedUser);
+  } catch (e) {
+    return null;
+  }
+};
+
+/* ================= UNIVERSAL LAYOUT (Fixes White Gaps) ================= */
+const AppLayout = () => {
   const location = useLocation();
-  const [profile, setProfile] = useState(null); // Profile state yahan banai
+  const [profile, setProfile] = useState(getUserProfile());
 
-  // 1. Backend se user data fetch karne ka logic
   useEffect(() => {
-    const getProfileData = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        if (!token) return;
+    setProfile(getUserProfile());
+  }, [location.pathname]);
 
-        // Apne actual endpoint ko yahan dalo (jaise /api/users/profile)
-        const res = await API.get('/users/profile', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-
-       
-        setProfile(res.data);
-      } catch (error) {
-        console.error("Error fetching profile:", error);
-      }
-    };
-
-    getProfileData();
-  }, []);
-
-  const isNotDashboard = location.pathname !== '/student/dashboard' && location.pathname !== '/';
+  const isDashboard = 
+    location.pathname === "/student/dashboard" || 
+    location.pathname === "/warden/dashboard";
 
   return (
-    <div className="min-h-screen bg-[#FFFBF9] relative">
-      {/* 2. ✅ Navbar ko fetch kiya hua profile pass kiya */}
-      <Navbar profile={profile} /> 
-
-      {/* Back Button Logic... (keep it as it is) */}
-      {isNotDashboard && (
-        <button
-          onClick={() => navigate('/student/dashboard')}
-          className="fixed bottom-8 right-8 z-[999] group flex items-center gap-3 bg-slate-900 text-white pl-4 pr-6 py-4 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.4)] border border-white/10 transition-all duration-500 hover:scale-110 active:scale-95"
-        >
-          <div className="relative size-10 bg-[#f97415] rounded-2xl flex items-center justify-center shadow-lg shadow-orange-500/40 group-hover:rotate-[360deg] transition-transform duration-700">
-            <Home size={20} strokeWidth={3} />
-          </div>
-          <div className="flex flex-col items-start text-left">
-            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-orange-400 leading-none">Return to</span>
-            <span className="text-sm font-[1000] tracking-tight">DASHBOARD</span>
-          </div>
-        </button>
-      )}
+    // Force the background color on the entire wrapper
+    <div className="min-h-screen w-full bg-[#fffaf5] flex flex-col relative overflow-x-hidden">
+      <Navbar profile={profile} />
+      {!isDashboard && <BackButton />}
       
-      <main className="pt-28 pb-10 px-4 md:px-8 max-w-[1500px] mx-auto">
-        {/* 3. ✅ Outlet ke through child pages ko bhi data bhej sakte hain */}
-        <Outlet context={{ profile }} /> 
+      {/* pt-28 ensures content starts below Navbar.
+         flex-grow ensures the footer is pushed to the bottom.
+      */}
+      <main className="flex-grow pt-28 pb-10 px-4 sm:px-6 w-full max-w-[1600px] mx-auto transition-all duration-300">
+        <Outlet />
       </main>
+      
+      <Footer />
     </div>
   );
 };
 
+/* ================= APP COMPONENT ================= */
 function App() {
   return (
     <Router>
-      <Toaster />
+      <Toaster 
+        position="top-center" 
+        toastOptions={{
+          duration: 4000,
+          style: { 
+            borderRadius: '16px', 
+            background: '#1e293b', 
+            color: '#fff',
+            fontWeight: '600'
+          },
+        }}
+      />
+
       <Routes>
-        {/* Public Routes */}
+        {/* Public Routes - No Navbar/Footer */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/verify-otp" element={<VerifyOTP />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/reset-password" element={<ResetPassword/>} />
+        <Route path="/reset-password" element={<ResetPassword />} />
 
-        {/* ✅ Protected Student Routes (Logic Applied Here) */}
-        <Route 
-          element={
-            <ProtectedRoute>
-              <StudentLayout />
-            </ProtectedRoute>
-          }
-        >
-          {/* Ye sab tabhi dikhenge jab login hoga */}
-          <Route path="/" element={<StudentDashboard />} />
-          <Route path="/student/dashboard" element={<StudentDashboard />} />
-          <Route path="/room-details" element={<RoomDetails />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/notices" element={<Notices />} />
-          <Route path="/mess-panel" element={<MessPanel />} />
-          <Route path="/student-actions" element={<StudentActions />} />
-          <Route path="/leave-management" element={<LeaveManagement />} />
-          <Route path="/complaints" element={<StudentComplaints />} />
-          <Route path="/fees" element={<FeesPage />} />
-          <Route path="/attendance-analytics" element={<AttendanceAnalytics />} />
-          <Route path="/gate-pass-manager" element={<GatePassManager />} />
-          <Route path='/activity-history' element={<ActivityHistory/>}/>
-          <Route path='/student/profile' element={<StudentProfile/>}/>
+        {/* Protected Section - Unified Layout */}
+        <Route element={<ProtectedRoute />}>
+          <Route element={<AppLayout />}>
+            
+            {/* STUDENT ROUTES */}
+            <Route path="/student/dashboard" element={<StudentDashboard />} />
+            <Route path="/student/profile" element={<StudentProfile />} />
+            <Route path="/room-details" element={<RoomDetails />} />
+            <Route path="/notices" element={<Notices />} />
+            <Route path="/mess-panel" element={<MessPanel />} />
+            <Route path="/student-actions" element={<StudentActions />} />
+            <Route path="/leave-management" element={<LeaveManagement />} />
+            <Route path="/complaints" element={<StudentComplaints />} />
+            <Route path="/fees" element={<FeesPage />} />
+            <Route path="/attendance-analytics" element={<AttendanceAnalytics />} />
+            <Route path="/gate-pass-manager" element={<GatePassManager />} />
+            <Route path="/activity-history" element={<ActivityHistory />} />
+            <Route path="/settings" element={<Settings />} />
 
-
-
-          {/* warden */}
-          <Route path='/markattendance' element={<MarkAttendance/>}/>
-          <Route path='/warden/complaints' element={<WardenComplaintDashboard/>}/>
-          <Route path='/warden/fees' element={<CreateFee/>}/>
-          <Route path='/warden/verify' element={<WardenVerifyPayments/>}/>
-          <Route path='/warden/actions' element={<WardenFeeActions/>}/>
-          <Route path='/warden/management' element={<WardenManagement/>}/>
-          <Route path='/warden/feedashboard' element={<WardenFeeDashboard/>}/>
-          <Route path='/warden/leave' element={<WardenLeaveManagement/>}/>
-          <Route path='/warden/menu' element={<MessMenuEditor/>}/>
-          <Route path='/warden/notices' element={<WardenNoticeManager/>}/>
-          <Route path='/warden/rooms' element={<WardenRoomManager/>}/>
-          <Route path="/warden/room-requests" element={<WardenRoomRequests />} />
-          <Route path="/warden/gate-pass" element={<WardenGatePassPortal />} />
-          <Route path="/warden/mess/activity" element={<WardenMessActivity />} />
-          <Route path="/warden/student-activity" element={<StudentActivity />} />
+            {/* WARDEN ROUTES */}
+            <Route path="/warden/dashboard" element={<WardenDashboard />} />
+            <Route path="/markattendance" element={<MarkAttendance />} />
+            <Route path="/warden/complaints" element={<WardenComplaintDashboard />} />
+            <Route path="/warden/fees" element={<CreateFee />} />
+            <Route path="/warden/verify" element={<WardenVerifyPayments />} />
+            <Route path="/warden/actions" element={<WardenFeeActions />} />
+            <Route path="/warden/management" element={<WardenManagement />} />
+            <Route path="/warden/feedashboard" element={<WardenFeeDashboard />} />
+            <Route path="/warden/leave" element={<WardenLeaveManagement />} />
+            <Route path="/warden/menu" element={<MessMenuEditor />} />
+            <Route path="/warden/notices" element={<WardenNoticeManager />} />
+            <Route path="/warden/rooms" element={<WardenRoomManager />} />
+            <Route path="/warden/room-requests" element={<WardenRoomRequests />} />
+            <Route path="/warden/gate-pass" element={<WardenGatePassPortal />} />
+            <Route path="/warden/mess/activity" element={<WardenMessActivity />} />
+            <Route path="/warden/student-activity" element={<StudentActivity />} />
+          </Route>
         </Route>
 
-        <Route path='/navbar-preview' element={<Navbar/>}/>
+        {/* Fallback Redirects */}
+        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </Router>
-  )
+  );
 }
 
-export default App
+export default App;

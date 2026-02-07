@@ -63,32 +63,44 @@ const VerifyOTP = () => {
       });
     }
   };
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const otpString = otp.join('');
-    if (otpString.length < 6) return toast.error("Please enter code.");
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  const otpString = otp.join('');
+  if (otpString.length < 6) return toast.error("Please enter code.");
 
-    setLoading(true);
-    try {
-      const response = await verifyOTP({ email, otp: otpString });
+  setLoading(true);
+  try {
+    const response = await verifyOTP({ email, otp: otpString });
 
-      // 🚀 Step: Token ko localStorage mein save karo (Iske bina dashboard nahi khulega)
-      if (response.token) {
-        localStorage.setItem('token', response.token);
-        localStorage.setItem('user', JSON.stringify(response.user));
-      }
+    // 🔥 FIXED LINE: Axios response.data check karein
+    const result = response.data; 
 
-      toast.success("Identity verified! Welcome. 😊");
+    if (result && result.token) {
+      // 1. Data Save karo (result use karke)
+      localStorage.setItem('token', result.token);
+      localStorage.setItem('user', JSON.stringify(result.user));
 
-      // Ab navigate karo dashboard par
-      setTimeout(() => navigate('/student/dashboard'), 1500);
+      toast.success(result.message || "Identity verified! 😊");
 
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Invalid code.");
-    } finally {
-      setLoading(false);
+      // 2. Redirect logic
+      setTimeout(() => {
+        // Yahan role 'student' ya 'warden' check karein
+        const targetPath = result.user.role === 'warden' 
+          ? '/warden/dashboard' 
+          : '/student/dashboard';
+        
+        window.location.href = targetPath;
+      }, 1000);
+    } else {
+      toast.error("Token not received from server.");
     }
-  };
+  } catch (err) {
+    console.error("Verification Error:", err);
+    toast.error(err.response?.data?.message || "Invalid code.");
+  } finally {
+    setLoading(false);
+  }
+};
   return (
     <AuthLayout
       title="Verify Identity"

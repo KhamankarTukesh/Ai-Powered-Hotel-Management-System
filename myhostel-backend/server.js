@@ -36,7 +36,7 @@ app.use('/api/complaints',complaintRoutes);
 app.use('/api/leaves',leaveRoutes);
 app.use('/api/attendance', attendanceRoutes);
 app.use('/api/ai',aiRoutes);
-app.use('/api/admin',adminRoutes);
+app.use('/api/warden',adminRoutes);
 app.use('/api/notice',noticeRoutes);
 app.use('/api/gatepass',gateRoutes);
 app.use('/api/fee',feeRoutes);

@@ -1,7 +1,6 @@
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 dotenv.config();
-
 export const sendEmail = async (to, subject, text) => {
     try {
         const transporter = nodemailer.createTransport({
@@ -14,17 +13,17 @@ export const sendEmail = async (to, subject, text) => {
 
         const mailOptions = {
             from: `"Dnyanda Hostel" <${process.env.EMAIL_USER}>`,
-            to: to,
-            subject: subject,
-            text: text
+            to,
+            subject,
+            text
         };
 
-        // 🛑 IMPORTANT: Yahan 'await' hona hi chahiye
         const info = await transporter.sendMail(mailOptions); 
         console.log("✅ Mail Server Response:", info.response); 
         return info;
     } catch (error) {
         console.error("❌ NODEMAILER REAL ERROR:", error.message);
-        return null; 
+        // Throw the error so the controller's catch block can handle it
+        throw new Error(error.message); 
     }
 };

@@ -2,11 +2,45 @@
 @tailwind components;
 @tailwind utilities;
 
+/* FIX: Force background on the absolute root elements.
+   This prevents white gaps during scrolling or on large screens.
+*/
+html, 
+body, 
+#root {
+  background-color: #fffaf5 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  min-height: 100vh;
+  width: 100%;
+  overflow-x: hidden; /* Prevents horizontal white gaps */
+}
+
 @layer components {
   .reg-field {
     @apply w-full pl-10 pr-4 py-3.5 bg-slate-50 border border-slate-100 rounded-xl outline-none font-bold text-sm focus:border-indigo-300 focus:bg-white transition-all text-slate-700;
   }
 }
+
+/* Custom Scrollbar - Orange Theme */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #fed7aa; /* orange-200 */
+  border-radius: 20px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #f97316; /* orange-500 */
+}
+
+/* Animations */
 @keyframes falling {
   0% { transform: translateY(-20px) rotate(0deg); opacity: 0; }
   10% { opacity: 1; }
@@ -23,10 +57,14 @@
   0%, 90%, 100% { opacity: 0.1; transform: scale(1); }
   95% { opacity: 0.4; transform: scale(1.1); }
 }
-.no-scrollbar::-webkit-scrollbar {
+
+/* Utility to hide scrollbar if needed */
+@layer utilities {
+  .scrollbar-hide::-webkit-scrollbar {
     display: none;
-}
-.no-scrollbar {
-    -ms-overflow-style: none;  /* IE and Edge */
-    scrollbar-width: none;  /* Firefox */
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
 }
