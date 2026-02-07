@@ -29,11 +29,11 @@ const app = express();
 app.use(express.json());
 app.use(cors({
   origin: [
-    "http://localhost:5173",              // 🧪 Local Vite frontend (development)
-    "https://ai-powered-hotel-management-system-53jxavove.vercel.app" ,
-    "ai-powered-hotel-management-system-seven.vercel.app"
+    "http://localhost:5173", 
+    "https://ai-powered-hotel-management-system-53jxavove.vercel.app", 
+    "https://ai-powered-hotel-management-system-seven.vercel.app"
   ],
-  credentials: true                      // 🍪 Cookies / JWT allow
+  credentials: true
 }));
 
 
