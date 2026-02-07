@@ -28,12 +28,13 @@ const app = express();
 
 app.use(express.json());
 app.use(cors({
-    origin: true, 
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-    credentials: true
+  origin: [
+    "http://localhost:5173",              // 🧪 Local Vite frontend (development)
+    "https://ai-hostel-system.vercel.app" // 🌍 Deployed frontend (Vercel - production)
+  ],
+  credentials: true                      // 🍪 Cookies / JWT allow
 }));
 
-app.options('*', cors());
 
 app.use('/api/auth', authRoutes);
 app.use('/api/rooms', roomRoutes);

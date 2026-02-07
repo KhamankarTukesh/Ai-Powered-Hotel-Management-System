@@ -1,15 +1,14 @@
 {
   "name": "myhostel-backend",
   "version": "1.0.0",
-  "main": "index.js",
   "type": "module",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "main": "server.js",
+  "engines": {
+    "node": "18.x"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
+  "scripts": {
+    "start": "node server.js"
+  },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
     "bcryptjs": "^3.0.3",

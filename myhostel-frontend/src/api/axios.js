@@ -1,7 +1,10 @@
 import axios from 'axios';
 
 const API = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL
+    baseURL: 'http://localhost:8080/api', // Check karo aapka backend port 8080 hi hai na?
+    headers: {
+        'Content-Type': 'application/json',
+    },
 });
 
 API.interceptors.request.use((config) => {
