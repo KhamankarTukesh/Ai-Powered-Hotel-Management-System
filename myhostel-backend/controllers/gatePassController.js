@@ -18,8 +18,6 @@ export const applyGatePass = async (req, res) => {
 };
 export const getActivePass = async (req, res) => {
     try {
-        // Hum sirf wo pass dhoond rahe hain jo is student ka hai 
-        // Aur status 'Returned' ya 'Rejected' nahi hai (Ya simply wo delete nahi hua)
         const activePass = await GatePass.findOne({ student: req.user.id });
         
         if (!activePass) {

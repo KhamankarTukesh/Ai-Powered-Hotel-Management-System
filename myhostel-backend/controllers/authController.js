@@ -212,8 +212,7 @@ export const forgotPassword = async (req, res) => {
         };
         await user.save();
 
-        // Terminal mein dikhega taaki aap copy kar sako
-        console.log(`[DNYANDA SECURITY] OTP for ${email}: ${otpCode}`);
+       ;
 
         // Email bhejna - Isko alag try-catch mein rakha hai taaki crash na ho
         try {

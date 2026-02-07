@@ -37,37 +37,42 @@ export const getMyAttendance = async (req, res) => {
     try {
         const studentId = req.user.id;
         const now = new Date();
-        
-        // Is mahine ki pehli date (1st of current month)
         const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-        
-        // Aaj tak kitne din beet chuke hain (e.g., Feb 3 hai toh 3 days)
         const daysElapsed = now.getDate(); 
 
-        // 1. Current Month mein kitne din "Present" marked hai
+        // 1. Current Month ki presence count
         const presentDays = await Attendance.countDocuments({
             student: studentId,
             status: 'Present',
             date: { $gte: startOfMonth }
         });
 
-        // 2. Real Percentage: (Present Days / Days Passed in Month) * 100
-        const percentage = daysElapsed > 0 ? (presentDays / daysElapsed) * 100 : 0;
+        // 2. Aaj ki Attendance check karein (Warden wali)
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+        const todayAttendance = await Attendance.findOne({
+            student: studentId,
+            date: todayStart
+        });
 
-        // 3. Aaj ki Mess Activity
+        // 3. Mess Activity (Optional info ke liye)
         const todayStr = now.toLocaleDateString('en-CA'); 
         const todayActivity = await MessActivity.findOne({
             student: studentId,
             date: todayStr
         });
 
+        const percentage = daysElapsed > 0 ? (presentDays / daysElapsed) * 100 : 0;
+
         res.status(200).json({
-            totalDays: daysElapsed, // Calendar days passed
-            presentDays,            // Actually present
+            totalDays: daysElapsed,
+            presentDays,
             percentage: percentage.toFixed(2),
             status: percentage >= 75 ? "Good" : "Low",
+            // 🔥 FIX: Check if Warden has marked attendance OR Mess has activity
             todayCheckIn: {
-                recorded: !!todayActivity,
+                recorded: !!todayAttendance || !!todayActivity, 
+                status: todayAttendance?.status || "Pending",
                 breakfast: todayActivity?.meals?.breakfast?.checked || false,
                 lunch: todayActivity?.meals?.lunch?.checked || false,
                 dinner: todayActivity?.meals?.dinner?.checked || false
