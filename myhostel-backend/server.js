@@ -27,7 +27,12 @@ import notificationRoutes from './routes/notificationRoutes.js';
 const app = express();
 
 app.use(express.json());
-app.use(cors());
+app.use(cors({
+    origin: ["https://ai-powered-hotel-management-system-kappa.vercel.app", "http://localhost:5173"], 
+    methods: ["GET", "POST", "PUT", "DELETE","PATCH"],
+    credentials: true
+}));
+
 
 
 app.use('/api/auth', authRoutes);
@@ -61,3 +66,5 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT} 🚀`);
 });
+
+export default app;
