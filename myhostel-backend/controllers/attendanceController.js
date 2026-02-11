@@ -5,83 +5,104 @@ import mongoose from "mongoose";
 export const markAttendance = async (req, res) => {
     try {
         const { attendanceData } = req.body;
+
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
-        // Bulk operations taiyar karein
         const ops = attendanceData
             .filter(item => mongoose.Types.ObjectId.isValid(item.studentId))
             .map(item => ({
                 updateOne: {
                     filter: { student: item.studentId, date: today },
-                    update: { 
-                        $set: { 
-                            status: item.status, 
-                            markedBy: req.user.id 
-                        } 
+                    update: {
+                        $set: {
+                            status: item.status,
+                            markedBy: req.user.id,
+                            date: today // ✔ ensures date always saved
+                        }
                     },
-                    upsert: true // Agar record nahi mila toh naya banao
+                    upsert: true
                 }
             }));
 
-        if (ops.length === 0) return res.status(400).json({ message: "Invalid Data" });
+        if (!ops.length)
+            return res.status(400).json({ message: "Invalid Data" });
 
         await Attendance.bulkWrite(ops);
 
         res.status(200).json({ message: "Attendance updated successfully!" });
+
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 };
+
 export const getMyAttendance = async (req, res) => {
     try {
         const studentId = req.user.id;
         const now = new Date();
-        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-        const daysElapsed = now.getDate(); 
 
-        // 1. Current Month ki presence count
+        /* ---------- Month Range ---------- */
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const today = new Date();
+        today.setHours(23, 59, 59, 999); // safer range end
+
+        /* ---------- Days Passed ---------- */
+        const daysPassed = now.getDate(); // 1 → 31
+
+        /* ---------- Present Count ---------- */
         const presentDays = await Attendance.countDocuments({
             student: studentId,
-            status: 'Present',
-            date: { $gte: startOfMonth }
+            status: "Present",
+            date: { $gte: startOfMonth, $lte: today }
         });
 
-        // 2. Aaj ki Attendance check karein (Warden wali)
+        /* ---------- Percentage (Correct Logic) ---------- */
+        const percentage =
+            daysPassed > 0
+                ? ((presentDays / daysPassed) * 100).toFixed(2)
+                : 0;
+
+        /* ---------- Today's Attendance ---------- */
         const todayStart = new Date();
         todayStart.setHours(0, 0, 0, 0);
+
+        const todayEnd = new Date();
+        todayEnd.setHours(23, 59, 59, 999);
+
         const todayAttendance = await Attendance.findOne({
             student: studentId,
-            date: todayStart
+            date: { $gte: todayStart, $lte: todayEnd }
         });
 
-        // 3. Mess Activity (Optional info ke liye)
-        const todayStr = now.toLocaleDateString('en-CA'); 
+        /* ---------- Mess Activity ---------- */
+        const todayStr = now.toLocaleDateString("en-CA");
+
         const todayActivity = await MessActivity.findOne({
             student: studentId,
             date: todayStr
         });
 
-        const percentage = daysElapsed > 0 ? (presentDays / daysElapsed) * 100 : 0;
-
         res.status(200).json({
-            totalDays: daysElapsed,
+            totalDays: daysPassed, // ✔ FIXED
             presentDays,
-            percentage: percentage.toFixed(2),
+            percentage,
             status: percentage >= 75 ? "Good" : "Low",
-            // 🔥 FIX: Check if Warden has marked attendance OR Mess has activity
+
             todayCheckIn: {
-                recorded: !!todayAttendance || !!todayActivity, 
+                recorded: !!todayAttendance || !!todayActivity,
                 status: todayAttendance?.status || "Pending",
                 breakfast: todayActivity?.meals?.breakfast?.checked || false,
                 lunch: todayActivity?.meals?.lunch?.checked || false,
                 dinner: todayActivity?.meals?.dinner?.checked || false
             }
         });
+
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 };
+
 
 export const getDailyReport = async (req, res) => {
     try {

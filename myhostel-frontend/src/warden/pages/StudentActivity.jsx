@@ -6,7 +6,7 @@ import { toast } from 'react-hot-toast';
 const StudentActivity = () => {
     const [allStudents, setAllStudents] = useState([]); 
     const [searchQuery, setSearchQuery] = useState("");
-    const [selectedStudent, setSelectedStudent] = useState(null); // <-- Aapka main variable
+    const [selectedStudent, setSelectedStudent] = useState(null);
     const [activities, setActivities] = useState([]);
     const [loading, setLoading] = useState(false);
 
@@ -28,7 +28,7 @@ const StudentActivity = () => {
     });
 
     const handleSelect = async (studentObj) => {
-        setSelectedStudent(studentObj); // Yahan set ho raha hai
+        setSelectedStudent(studentObj);
         setSearchQuery(`${studentObj.fullName} (${studentObj.studentDetails?.rollNumber})`);
         fetchActivities(studentObj.studentDetails?.rollNumber);
     };
@@ -51,31 +51,32 @@ const StudentActivity = () => {
         } catch (err) { toast.error("Delete failed"); }
     };
 
-// --- UPDATED BULK DELETE LOGIC ---
-const handleClearAll = async () => {
-    if(!selectedStudent) return;
-    
-    
-    const confirmMsg = `Are you sure you want to delete the entire history for ${selectedStudent.fullName}?`;
-    if(!window.confirm(confirmMsg)) return;
-
-    try {
-        await API.delete(`/activity/clear-all?rollNumber=${selectedStudent.studentDetails.rollNumber}`);
-        setActivities([]);
-        toast.success("History cleared successfully!"); // Updated to English
-    } catch (err) { 
-        toast.error(err.response?.data?.error || "Failed to clear history"); 
-    }
-};
+    const handleClearAll = async () => {
+        if(!selectedStudent) return;
+        const confirmMsg = `Are you sure you want to delete the entire history for ${selectedStudent.fullName}?`;
+        if(!window.confirm(confirmMsg)) return;
+        try {
+            await API.delete(`/activity/clear-all?rollNumber=${selectedStudent.studentDetails.rollNumber}`);
+            setActivities([]);
+            toast.success("History cleared successfully!");
+        } catch (err) { 
+            toast.error(err.response?.data?.error || "Failed to clear history"); 
+        }
+    };
 
     return (
-        <div className="min-h-screen bg-[#fffaf5] p-6 lg:p-12">
+        <div className="min-h-screen bg-[#fffaf5] p-4 lg:p-12">
             <div className="max-w-4xl mx-auto space-y-8">
-                <header>
+
+                {/* Header */}
+                <header className="space-y-2">
                     <h1 className="text-4xl font-black text-slate-900 italic">ACTIVITY <span className="text-[#ff6b00]">LOGS</span></h1>
-                    <p className="text-orange-500 font-bold uppercase text-[10px] tracking-widest flex items-center gap-2"><Sparkles size={12}/> Search & Manage Movement</p>
+                    <p className="text-orange-500 font-bold uppercase text-[10px] tracking-widest flex items-center gap-2">
+                        <Sparkles size={12}/> Search & Manage Movement
+                    </p>
                 </header>
 
+                {/* Search */}
                 <div className="relative">
                     <div className="relative group">
                         <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-orange-400" size={20} />
@@ -90,22 +91,25 @@ const handleClearAll = async () => {
                             }}
                         />
                         {searchQuery && (
-                            <button onClick={() => {setSearchQuery(""); setSelectedStudent(null); setActivities([])}} className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-300 hover:text-red-500">
+                            <button onClick={() => {setSearchQuery(""); setSelectedStudent(null); setActivities([])}} 
+                                className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-300 hover:text-red-500">
                                 <X size={20}/>
                             </button>
                         )}
                     </div>
 
+                    {/* Search Results Dropdown */}
                     {searchQuery.length > 0 && !selectedStudent && (
                         <div className="absolute w-full mt-2 bg-white border border-orange-100 rounded-[2rem] shadow-2xl z-50 max-h-60 overflow-y-auto p-2">
                             {filteredStudents.length > 0 ? (
                                 filteredStudents.map((item) => (
-                                    <div key={item.student._id} onClick={() => handleSelect(item.student)} className="p-4 hover:bg-orange-50 cursor-pointer rounded-2xl flex justify-between items-center transition-colors">
+                                    <div key={item.student._id} onClick={() => handleSelect(item.student)} 
+                                        className="p-4 hover:bg-orange-50 cursor-pointer rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center transition-colors gap-2">
                                         <div>
-                                            <p className="font-black text-slate-800">{item.student.fullName}</p>
-                                            <p className="text-xs font-bold text-slate-400 uppercase">{item.student.studentDetails?.rollNumber}</p>
+                                            <p className="font-black text-slate-800 truncate">{item.student.fullName}</p>
+                                            <p className="text-xs font-bold text-slate-400 uppercase truncate">{item.student.studentDetails?.rollNumber}</p>
                                         </div>
-                                        <span className="text-[10px] bg-orange-100 text-orange-600 px-3 py-1 rounded-full font-black">VIEW LOGS</span>
+                                        <span className="text-[10px] bg-orange-100 text-orange-600 px-3 py-1 rounded-full font-black mt-2 sm:mt-0">VIEW LOGS</span>
                                     </div>
                                 ))
                             ) : <p className="p-4 text-center text-slate-400 font-bold italic">No students found</p>}
@@ -113,7 +117,7 @@ const handleClearAll = async () => {
                     )}
                 </div>
 
-                {/* --- FIXED CLEAR ALL BUTTON --- */}
+                {/* Clear All Button */}
                 {activities.length > 0 && selectedStudent && (
                     <button 
                         onClick={handleClearAll}
@@ -123,41 +127,49 @@ const handleClearAll = async () => {
                     </button>
                 )}
 
+                {/* Activity Logs */}
                 <div className="space-y-4">
-                    {loading ? <div className="flex justify-center py-10"><Loader2 className="animate-spin text-[#ff6b00]" size={40}/></div> : (
-                        activities.map((log) => (
-                            <div key={log._id} className="group relative bg-white p-6 rounded-[2.5rem] border border-orange-50 shadow-sm hover:shadow-md transition-all flex flex-col md:flex-row justify-between gap-4">
-                                <div className="space-y-2">
-                                    <div className="flex items-center gap-3">
-                                        <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase ${log.action === 'Check-out' || log.action === 'Check-in' ? 'bg-orange-50 text-orange-600' : 'bg-slate-50 text-slate-600'}`}>
-                                            {log.action}
-                                        </span>
-                                        <span className="text-[10px] font-bold text-slate-300 italic">
-                                            {new Date(log.createdAt).toLocaleString()}
-                                        </span>
+                    {loading ? 
+                        <div className="flex justify-center py-10"><Loader2 className="animate-spin text-[#ff6b00]" size={40}/></div> 
+                        : (
+                            activities.map((log) => (
+                                <div key={log._id} 
+                                    className="group relative bg-white p-6 rounded-[2.5rem] border border-orange-50 shadow-sm hover:shadow-md transition-all flex flex-col md:flex-row justify-between gap-4 flex-wrap">
+                                    
+                                    <div className="space-y-2 flex-1 min-w-0">
+                                        <div className="flex flex-wrap items-center gap-3">
+                                            <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase ${log.action === 'Check-out' || log.action === 'Check-in' ? 'bg-orange-50 text-orange-600' : 'bg-slate-50 text-slate-600'}`}>
+                                                {log.action}
+                                            </span>
+                                            <span className="text-[10px] font-bold text-slate-300 italic truncate">
+                                                {new Date(log.createdAt).toLocaleString()}
+                                            </span>
+                                        </div>
+                                        <p className="font-bold text-slate-700 truncate">{log.description}</p>
+                                        <div className="flex flex-wrap items-center gap-2 text-[10px] font-black text-slate-400 uppercase">
+                                            <MapPin size={12} className="text-orange-400"/> 
+                                            Room: {log.student?.roomNumber || "Waiting for Allocation"}
+                                        </div>
                                     </div>
-                                    <p className="font-bold text-slate-700">{log.description}</p>
-                                    <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase">
-                                        <MapPin size={12} className="text-orange-400"/> 
-                                        Room: {log.student?.roomNumber || "Waiting for Allocation"}
-                                    </div>
-                                </div>
 
-                                <button 
-                                    onClick={() => handleDelete(log._id)}
-                                    className="md:opacity-0 group-hover:opacity-100 p-3 bg-red-50 text-red-500 rounded-2xl hover:bg-red-500 hover:text-white transition-all self-center md:self-auto"
-                                >
-                                    <Trash2 size={18}/>
-                                </button>
-                            </div>
-                        ))
-                    )}
+                                    <button 
+                                        onClick={() => handleDelete(log._id)}
+                                        className="md:opacity-0 group-hover:opacity-100 p-3 bg-red-50 text-red-500 rounded-2xl hover:bg-red-500 hover:text-white transition-all self-center md:self-auto"
+                                    >
+                                        <Trash2 size={18}/>
+                                    </button>
+                                </div>
+                            ))
+                        )
+                    }
+
                     {!loading && selectedStudent && activities.length === 0 && (
                         <div className="text-center py-16 bg-white rounded-[3rem] border-2 border-dashed border-orange-100">
                              <p className="font-bold text-slate-400 italic uppercase text-xs tracking-widest">No history records found for this student.</p>
                         </div>
                     )}
                 </div>
+
             </div>
         </div>
     );

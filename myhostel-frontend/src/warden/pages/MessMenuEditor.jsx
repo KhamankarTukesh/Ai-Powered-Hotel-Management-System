@@ -28,7 +28,6 @@ const MessMenuEditor = () => {
     e.preventDefault();
     setLoading(true);
 
-    // Payload format: "HH:mm - HH:mm" for backend compatibility
     const payload = {
       ...formData,
       breakfastTime: `${formData.breakfastStart} - ${formData.breakfastEnd}`,
@@ -48,9 +47,9 @@ const MessMenuEditor = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#fffaf5] p-6 md:p-12 font-display">
+    <div className="min-h-screen bg-[#fffaf5] p-4 md:p-12 font-display">
       <div className="max-w-3xl mx-auto space-y-10">
-        
+
         {/* Header */}
         <div className="text-center space-y-2">
           <div className="inline-flex p-4 bg-orange-100 rounded-3xl text-orange-600 mb-2">
@@ -60,14 +59,14 @@ const MessMenuEditor = () => {
           <p className="text-orange-500 font-bold uppercase tracking-[0.2em] text-[10px]">Weekly Nutrition Management</p>
         </div>
 
-        <form onSubmit={handleUpdate} className="bg-white rounded-[3rem] p-8 md:p-12 shadow-xl shadow-orange-900/5 border border-orange-50/50 space-y-8">
-          
+        <form onSubmit={handleUpdate} className="bg-white rounded-[3rem] p-6 md:p-12 shadow-xl shadow-orange-900/5 border border-orange-50/50 space-y-8">
+
           {/* Day Selector */}
           <div className="space-y-4">
             <label className="flex items-center gap-2 text-[10px] font-black uppercase text-slate-400 tracking-widest px-2">
               <Calendar size={14} /> Select Day
             </label>
-            <div className="grid grid-cols-4 md:grid-cols-7 gap-2">
+            <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
               {days.map((d) => (
                 <button
                   key={d}
@@ -157,7 +156,7 @@ const MessMenuEditor = () => {
 // Reusable Input Component with Clock Inputs
 const MealInput = ({ icon, label, itemsValue, startValue, endValue, onItemsChange, onStartChange, onEndChange }) => (
   <div className="space-y-3">
-    <div className="flex items-center justify-between px-2">
+    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 px-2">
       <label className="flex items-center gap-2 text-[10px] font-black uppercase text-slate-400 tracking-widest">
         {icon} {label}
       </label>

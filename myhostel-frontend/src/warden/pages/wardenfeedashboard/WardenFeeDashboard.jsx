@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 const WardenFeeDashboard = () => {
   const navigate = useNavigate();
 
-  // Define your paths here
   const actions = [
     {
       title: "Pending Verifications",
@@ -33,76 +32,113 @@ const WardenFeeDashboard = () => {
       desc: "Download full CSV reports and balance sheets.",
       icon: "description",
       badge: "Export Data",
-      path: "/warden/actions", // This triggers your CSV download logic
+      path: "/warden/actions",
     },
   ];
 
   return (
-    <div className="relative flex min-h-screen w-full flex-col bg-[#fffaf5] font-display overflow-x-hidden selection:bg-orange-100 selection:text-orange-600">
-      <div className="layout-container flex h-full grow flex-col items-center justify-center py-12 px-4 md:px-10">
-        <div className="layout-content-container flex flex-col w-full max-w-[1024px] gap-8">
-          
-          {/* HEADER SECTION */}
-          <div className="w-full bg-gradient-to-r from-orange-50 to-orange-100/50 text-orange-950 rounded-[2rem] p-8 md:p-10 shadow-lg border border-orange-100/60 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-2/3 h-full bg-gradient-to-l from-white/40 to-transparent pointer-events-none"></div>
-            <div className="flex flex-col gap-2 z-10">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-orange-100 rounded-full">
-                  <span className="material-symbols-outlined text-orange-600">security</span>
-                </div>
-                <p className="text-orange-600/80 text-sm font-semibold tracking-wide uppercase">Hostel Management System</p>
+    <div className="min-h-screen w-full bg-[#fffaf5] font-display overflow-x-hidden px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-6xl mx-auto flex flex-col gap-8">
+
+        {/* ================= HEADER ================= */}
+        <div className="relative w-full bg-gradient-to-r from-orange-50 to-orange-100/60 text-orange-950 rounded-3xl p-6 sm:p-8 lg:p-10 shadow-md border border-orange-100 flex flex-col lg:flex-row justify-between gap-6 overflow-hidden">
+
+          <div className="absolute top-0 right-0 w-2/3 h-full bg-gradient-to-l from-white/40 to-transparent pointer-events-none" />
+
+          {/* Left Section */}
+          <div className="flex flex-col gap-2 z-10">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="p-2 bg-orange-100 rounded-full">
+                <span className="material-symbols-outlined text-orange-600">
+                  security
+                </span>
               </div>
-              <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-gray-900 mt-1 italic">Warden Finance Hub</h1>
+
+              <p className="text-xs sm:text-sm font-semibold tracking-wide uppercase text-orange-600/80">
+                Hostel Management System
+              </p>
             </div>
-            <div className="flex items-center gap-3 bg-white/60 px-5 py-3 rounded-full backdrop-blur-md border border-orange-100 shadow-sm z-10">
-              <span className="material-symbols-outlined text-orange-500" style={{ fontSize: '20px' }}>calendar_today</span>
-              <span className="text-gray-700 text-sm font-semibold">
-  Academic Session {new Date().getFullYear() - 1}-{new Date().getFullYear()}
-</span>
-            </div>
+
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold italic text-gray-900">
+              Warden Finance Hub
+            </h1>
           </div>
 
-          {/* GRID SECTION */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
-            {actions.map((item, index) => (
-              <div
-                key={index}
-                onClick={() => navigate(item.path)}
-                className="group relative flex flex-col justify-between p-8 min-h-[300px] bg-white/70 backdrop-blur-xl rounded-[2rem] border border-white shadow-sm hover:shadow-2xl hover:shadow-orange-200/50 hover:-translate-y-2 transition-all duration-300 cursor-pointer overflow-hidden"
-              >
-                {/* Decorative Blur Circle */}
-                <div className="absolute -right-10 -top-10 w-48 h-48 bg-orange-50 rounded-full blur-3xl group-hover:bg-orange-100 transition-colors"></div>
+          {/* Session Badge */}
+          <div className="flex items-center justify-center lg:justify-end z-10">
+            <div className="flex items-center gap-2 sm:gap-3 bg-white/70 px-4 sm:px-5 py-2 sm:py-3 rounded-full backdrop-blur-md border border-orange-100 shadow-sm">
+              <span className="material-symbols-outlined text-orange-500 text-[18px]">
+                calendar_today
+              </span>
 
-                <div className="flex justify-between items-start z-10">
-                  <div className="h-14 w-14 rounded-full bg-orange-50 text-orange-600 flex items-center justify-center border border-orange-100 group-hover:bg-orange-600 group-hover:text-white transition-all">
-                    <span className="material-symbols-outlined" style={{ fontSize: '28px' }}>{item.icon}</span>
-                  </div>
-                  <span className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider border flex items-center gap-1 transition-all ${
-                    item.showPriority 
-                    ? "bg-orange-100 text-orange-700 border-orange-200 group-hover:bg-orange-600 group-hover:text-white" 
-                    : "bg-white text-gray-500 border-gray-100 group-hover:border-orange-200"
-                  }`}>
-                    {item.showPriority && <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>priority_high</span>}
-                    {item.badge}
+              <span className="text-gray-700 text-xs sm:text-sm font-semibold">
+                Academic Session {new Date().getFullYear() - 1}-
+                {new Date().getFullYear()}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* ================= GRID ================= */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-2 gap-5 sm:gap-6">
+
+          {actions.map((item, index) => (
+            <div
+              key={index}
+              onClick={() => navigate(item.path)}
+              className="group relative flex flex-col justify-between p-6 sm:p-8 min-h-[240px] sm:min-h-[280px] lg:min-h-[300px] bg-white/80 backdrop-blur-xl rounded-3xl border border-white shadow-sm transition-all duration-300 cursor-pointer hover:shadow-xl hover:-translate-y-1 overflow-hidden"
+            >
+
+              {/* Blur Decoration */}
+              <div className="absolute -right-10 -top-10 w-40 sm:w-48 h-40 sm:h-48 bg-orange-50 rounded-full blur-3xl group-hover:bg-orange-100 transition-colors" />
+
+              {/* Top Row */}
+              <div className="flex justify-between items-start z-10">
+
+                {/* Icon */}
+                <div className="h-12 w-12 sm:h-14 sm:w-14 rounded-full bg-orange-50 text-orange-600 flex items-center justify-center border border-orange-100 transition-all group-hover:bg-orange-600 group-hover:text-white">
+                  <span className="material-symbols-outlined text-[22px] sm:text-[28px]">
+                    {item.icon}
                   </span>
                 </div>
 
-                <div className="flex flex-col gap-3 mt-auto z-10">
-                  <h2 className="text-gray-900 text-2xl font-black leading-tight group-hover:text-orange-600 transition-colors">
-                    {item.title}
-                  </h2>
-                  <p className="text-gray-500 text-base font-medium leading-relaxed group-hover:text-gray-700">
-                    {item.desc}
-                  </p>
-                </div>
-
-                {/* Arrow Icon */}
-                <div className="absolute bottom-8 right-8 h-10 w-10 rounded-full bg-orange-50 text-orange-500 flex items-center justify-center opacity-0 translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300">
-                  <span className="material-symbols-outlined">arrow_forward</span>
-                </div>
+                {/* Badge */}
+                <span
+                  className={`px-3 sm:px-4 py-1 sm:py-1.5 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-wider border flex items-center gap-1 transition-all
+                  ${
+                    item.showPriority
+                      ? "bg-orange-100 text-orange-700 border-orange-200 group-hover:bg-orange-600 group-hover:text-white"
+                      : "bg-white text-gray-500 border-gray-100 group-hover:border-orange-200"
+                  }`}
+                >
+                  {item.showPriority && (
+                    <span className="material-symbols-outlined text-[12px]">
+                      priority_high
+                    </span>
+                  )}
+                  {item.badge}
+                </span>
               </div>
-            ))}
-          </div>
+
+              {/* Content */}
+              <div className="flex flex-col gap-2 sm:gap-3 mt-auto z-10">
+                <h2 className="text-xl sm:text-2xl font-black text-gray-900 group-hover:text-orange-600 transition-colors">
+                  {item.title}
+                </h2>
+
+                <p className="text-sm sm:text-base text-gray-500 font-medium group-hover:text-gray-700">
+                  {item.desc}
+                </p>
+              </div>
+
+              {/* Arrow */}
+              <div className="absolute bottom-6 right-6 h-9 w-9 sm:h-10 sm:w-10 rounded-full bg-orange-50 text-orange-500 flex items-center justify-center opacity-0 translate-x-3 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300">
+                <span className="material-symbols-outlined text-[18px]">
+                  arrow_forward
+                </span>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>

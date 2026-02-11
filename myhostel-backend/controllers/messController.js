@@ -46,13 +46,38 @@ export const markMeal = async (req, res) => {
 export const submitFeedback = async (req, res) => {
     try {
         const { rating, comment } = req.body;
-        const today = new Date().toISOString().split('T')[0];
 
-        let activity = await MessActivity.findOne({ student: req.user.id, date: today });
-        if (!activity) return res.status(404).json({ message: "Mark attendance first!" });
+        const now = new Date();
+        const today = now.toISOString().split('T')[0];
+
+        // 1️⃣ Allow ONLY on Sunday (0 = Sunday)
+        if (now.getDay() !== 0) {
+            return res.status(403).json({
+                message: "Feedback can be submitted only on Sundays"
+            });
+        }
+
+        let activity = await MessActivity.findOne({
+            student: req.user.id,
+            date: today
+        });
+
+        if (!activity) {
+            return res.status(404).json({
+                message: "Mark attendance first!"
+            });
+        }
+
+        // 2️⃣ Allow ONLY ONCE per Sunday
+        if (activity.feedback && activity.feedback.comment) {
+            return res.status(409).json({
+                message: "You have already submitted feedback for this Sunday"
+            });
+        }
 
         let detectedSentiment = 'Neutral';
 
+        // 3️⃣ AI Sentiment Analysis (unchanged logic)
         if (comment) {
             try {
                 const response = await openai.chat.completions.create({
@@ -60,29 +85,42 @@ export const submitFeedback = async (req, res) => {
                     messages: [
                         {
                             role: "system",
-                            content: "You are an expert food critic analyzer. Classify the user's review strictly as 'Positive', 'Negative', or 'Neutral'. If they complain about salt, hardness, or quality, it is ALWAYS 'Negative'."
+                            content:
+                                "You are an expert food critic analyzer. Classify the user's review strictly as 'Positive', 'Negative', or 'Neutral'. If they complain about salt, hardness, or quality, it is ALWAYS 'Negative'."
                         },
-                        { role: "user", content: `Review: "${comment}"` }
+                        {
+                            role: "user",
+                            content: `Review: "${comment}"`
+                        }
                     ],
-                    temperature: 0, // Isse AI hamesha consistent results dega
+                    temperature: 0,
                     max_tokens: 10,
                 });
 
-                // Trim() aur capitalize karke save karna
-                detectedSentiment = response.choices[0].message.content.trim().replace(/[.!?]/g, "");
+                detectedSentiment = response.choices[0].message.content
+                    .trim()
+                    .replace(/[.!?]/g, "");
             } catch (err) {
                 console.error("OpenAI SDK Error:", err.message);
-                // Default Neutral hi rahega agar API fail hui
             }
         }
-        activity.feedback = { rating, comment, sentiment: detectedSentiment };
+
+        // 4️⃣ Save feedback (once)
+        activity.feedback = {
+            rating,
+            comment,
+            sentiment: detectedSentiment,
+            date: today
+        };
+
         await activity.save();
 
         res.status(200).json({
-            message: "Feedback submitted!",
+            message: "Feedback submitted successfully",
             sentiment: detectedSentiment,
             activity
         });
+
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

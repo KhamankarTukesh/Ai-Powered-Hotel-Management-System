@@ -16,14 +16,11 @@ const AttendanceManager = () => {
         if (report.length === 0) return toast.error("No data to download");
 
         const doc = new jsPDF();
-
-        // PDF Header
         doc.setFontSize(18);
         doc.text("Daily Attendance Report", 14, 20);
         doc.setFontSize(11);
         doc.text(`Date: ${new Date().toLocaleDateString()}`, 14, 30);
 
-        // Table Data
         const tableColumn = ["Student Name", "Room No", "Status"];
         const tableRows = report.map(item => [
             item.student?.fullName || "N/A",
@@ -31,7 +28,6 @@ const AttendanceManager = () => {
             item.status
         ]);
 
-        // CHANGE HERE: Use autoTable as a function, not a doc method
         autoTable(doc, {
             head: [tableColumn],
             body: tableRows,
@@ -43,16 +39,13 @@ const AttendanceManager = () => {
         doc.save(`Attendance_${new Date().toISOString().split('T')[0]}.pdf`);
         toast.success("PDF Downloaded!");
     };
-    // --- 2. DELETE REPORT LOGIC ---
+
     const handleDeleteDailyReport = async () => {
         if (!window.confirm("Warning: Are you sure you want to clear today's attendance from the database?")) return;
-
         try {
             setLoading(true);
             await API.delete('/attendance/daily-report');
             toast.success("Today's report cleared!");
-
-            // UI Update: Report khali kar do aur switches ko wapas default kar do
             setReport([]);
             const defaults = {};
             students.forEach(s => { defaults[s._id] = "Present"; });
@@ -64,47 +57,40 @@ const AttendanceManager = () => {
         }
     };
 
-    // --- 3. FETCH & SYNC LOGIC ---
-const fetchDailyReport = useCallback(async (shouldUpdateSwitches = false) => {
-    try {
-        const { data } = await API.get(`/attendance/daily-report?t=${new Date().getTime()}`);
-        let reportData = Array.isArray(data) ? data : [];
+    const fetchDailyReport = useCallback(async (shouldUpdateSwitches = false) => {
+        try {
+            const { data } = await API.get(`/attendance/daily-report?t=${new Date().getTime()}`);
+            let reportData = Array.isArray(data) ? data : [];
 
-        // --- ROOM NUMBER FIX START ---
-        // Agar backend room info nahi bhej raha, toh hum students list se match karenge
-        const enrichedReport = reportData.map(item => {
-            const studentId = item.student?._id || item.student;
-            // Hum students list mein se matching student dhoond rahe hain
-            const studentInfo = students.find(s => s._id === studentId);
-
-            return {
-                ...item,
-                student: {
-                    ...item.student,
-                    // Pehle se hai toh wahi rakho, nahi toh students list se uthao
-                    fullName: item.student?.fullName || studentInfo?.fullName || "Unknown",
-                    roomNo: item.student?.roomNo || studentInfo?.roomNo || "N/A"
-                }
-            };
-        });
-        // --- ROOM NUMBER FIX END ---
-
-        setReport(enrichedReport);
-
-        if (shouldUpdateSwitches === true && enrichedReport.length > 0) {
-            setAttendanceMap(prev => {
-                const syncedMap = { ...prev };
-                enrichedReport.forEach(item => {
-                    const id = item.student?._id || item.student;
-                    if (id) syncedMap[id] = item.status;
-                });
-                return syncedMap;
+            const enrichedReport = reportData.map(item => {
+                const studentId = item.student?._id || item.student;
+                const studentInfo = students.find(s => s._id === studentId);
+                return {
+                    ...item,
+                    student: {
+                        ...item.student,
+                        fullName: item.student?.fullName || studentInfo?.fullName || "Unknown",
+                        roomNo: item.student?.roomNo || studentInfo?.roomNo || "N/A"
+                    }
+                };
             });
+
+            setReport(enrichedReport);
+
+            if (shouldUpdateSwitches && enrichedReport.length > 0) {
+                setAttendanceMap(prev => {
+                    const syncedMap = { ...prev };
+                    enrichedReport.forEach(item => {
+                        const id = item.student?._id || item.student;
+                        if (id) syncedMap[id] = item.status;
+                    });
+                    return syncedMap;
+                });
+            }
+        } catch (err) {
+            console.error("Sync Error:", err);
         }
-    } catch (err) {
-        console.error("Sync Error:", err);
-    }
-}, [students]); // Yahan 'students' dependency hona zaroori hai
+    }, [students]);
 
     const fetchInitialData = async () => {
         setLoading(true);
@@ -142,7 +128,7 @@ const fetchDailyReport = useCallback(async (shouldUpdateSwitches = false) => {
             const payload = {
                 attendanceData: Object.entries(attendanceMap).map(([id, status]) => ({
                     studentId: id,
-                    status: status
+                    status
                 }))
             };
             await API.post('/attendance/mark', payload);
@@ -173,7 +159,7 @@ const fetchDailyReport = useCallback(async (shouldUpdateSwitches = false) => {
                 {/* LEFT: MARK ATTENDANCE */}
                 <section className="lg:col-span-5 xl:col-span-4 flex flex-col bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden h-full relative">
                     <div className="p-6 pb-2 shrink-0 bg-white">
-                        <div className="flex items-center justify-between mb-6">
+                        <div className="flex items-center justify-between mb-6 flex-wrap gap-2">
                             <div>
                                 <h2 className="text-2xl font-black tracking-tight text-[#181411]">Mark Attendance</h2>
                                 <p className="text-sm text-[#8c725f] mt-1">Review student presence</p>
@@ -195,7 +181,7 @@ const fetchDailyReport = useCallback(async (shouldUpdateSwitches = false) => {
 
                     <div className="flex-1 overflow-y-auto custom-scrollbar px-6 pt-2 pb-24 space-y-3">
                         {filteredStudents.map((student) => (
-                            <div key={student._id} className="flex items-center justify-between p-4 bg-[#f8f7f5] rounded-2xl group transition-all">
+                            <div key={student._id} className="flex items-center justify-between p-4 bg-[#f8f7f5] rounded-2xl group transition-all flex-wrap">
                                 <div className="flex items-center gap-3">
                                     <div className="size-10 rounded-full bg-white flex items-center justify-center font-bold text-[#f97415] shadow-sm uppercase">
                                         {student.fullName[0]}
@@ -205,7 +191,7 @@ const fetchDailyReport = useCallback(async (shouldUpdateSwitches = false) => {
                                         <p className="text-[10px] text-[#8c725f] font-bold uppercase tracking-tight">Room {student.roomNo}</p>
                                     </div>
                                 </div>
-                                <label className="relative inline-flex items-center cursor-pointer">
+                                <label className="relative inline-flex items-center cursor-pointer mt-2 lg:mt-0">
                                     <input
                                         type="checkbox"
                                         className="sr-only peer"
@@ -236,14 +222,13 @@ const fetchDailyReport = useCallback(async (shouldUpdateSwitches = false) => {
                 {/* RIGHT: DAILY REPORT WITH PDF & DELETE */}
                 <section className="lg:col-span-7 xl:col-span-8 flex flex-col gap-6 h-full overflow-hidden">
                     <div className="bg-white rounded-[2rem] shadow-sm border border-gray-100 flex-1 flex flex-col overflow-hidden">
-                        <div className="p-8 pb-4 flex items-center justify-between">
+                        <div className="p-6 md:p-8 pb-4 flex items-center justify-between flex-wrap gap-2">
                             <div>
                                 <h2 className="text-2xl font-black tracking-tight">Daily Report</h2>
                                 <p className="text-sm text-[#8c725f] mt-1">Status from database</p>
                             </div>
 
-                            <div className="flex gap-2">
-                                {/* DOWNLOAD PDF BUTTON */}
+                            <div className="flex gap-2 flex-wrap">
                                 <button
                                     onClick={downloadReport}
                                     className="flex items-center gap-2 bg-blue-50 text-blue-600 font-bold py-2.5 px-4 rounded-xl hover:bg-blue-100 transition-all text-sm border border-blue-100"
@@ -252,7 +237,6 @@ const fetchDailyReport = useCallback(async (shouldUpdateSwitches = false) => {
                                     PDF
                                 </button>
 
-                                {/* DELETE REPORT BUTTON */}
                                 <button
                                     onClick={handleDeleteDailyReport}
                                     className="flex items-center gap-2 bg-red-50 text-red-600 font-bold py-2.5 px-4 rounded-xl hover:bg-red-100 transition-all text-sm border border-red-100"
@@ -271,8 +255,8 @@ const fetchDailyReport = useCallback(async (shouldUpdateSwitches = false) => {
                             </div>
                         </div>
 
-                        <div className="flex-1 overflow-auto custom-scrollbar p-8 pt-2">
-                            <table className="w-full text-left">
+                        <div className="flex-1 overflow-auto custom-scrollbar p-4 md:p-8 pt-2">
+                            <table className="w-full text-left min-w-[400px] md:min-w-full">
                                 <thead className="bg-[#f8f7f5] sticky top-0 z-10">
                                     <tr>
                                         <th className="py-4 px-4 text-xs font-bold text-[#8c725f] uppercase rounded-l-xl">Student</th>
@@ -297,7 +281,7 @@ const fetchDailyReport = useCallback(async (shouldUpdateSwitches = false) => {
                             </table>
                         </div>
                     </div>
-                    <div className="grid grid-cols-3 gap-6 h-32 shrink-0">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 h-32 shrink-0">
                         <div className="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-6 flex flex-col justify-center">
                             <p className="text-sm font-medium text-[#8c725f]">Total</p>
                             <p className="text-3xl font-black mt-1">{students.length}</p>

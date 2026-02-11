@@ -1,14 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import API from '../../api/axios';
-import { Toaster } from 'react-hot-toast';
-import { toast } from 'react-hot-toast';
+import { Toaster, toast } from 'react-hot-toast';
 
 const StudentProfile = () => {
     const [user, setUser] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [loading, setLoading] = useState(true);
-    const fileInputRef = React.useRef(null);
+
+    const fileInputRef = useRef(null);
+
     const [formData, setFormData] = useState({
         guardianName: '',
         relation: '',
@@ -17,13 +18,15 @@ const StudentProfile = () => {
         address: ''
     });
 
+    // ================= FETCH USER =================
     useEffect(() => {
         const fetchUserData = async () => {
             try {
                 const { data } = await API.get('/users/profile');
+
                 setUser(data);
 
-                if (data.parentDetails) {
+                if (data?.parentDetails) {
                     setFormData({
                         guardianName: data.parentDetails.guardianName || '',
                         relation: data.parentDetails.relation || '',
@@ -33,22 +36,11 @@ const StudentProfile = () => {
                     });
                 }
 
-                // Notification logic: Yeh tabhi chalega jab first time data fetch ho
-                if (!data.parentDetails?.guardianName) {
-                    toast.error("Please complete your Parent Details to finalize your profile.", {
-                        duration: 6000,
-                        position: 'top-center',
-                        style: {
-                            borderRadius: '16px',
-                            background: '#fff',
-                            color: '#1b140d',
-                            border: '1px solid #f09942',
-                            padding: '16px'
-                        },
-                        icon: '⚠️',
-                    });
+                if (!data?.parentDetails?.guardianName) {
+                    toast.error("Please complete Parent Details to finalize your profile");
                 }
-            } catch (error) {
+
+            } catch {
                 toast.error("Failed to load profile data");
             } finally {
                 setLoading(false);
@@ -56,243 +48,234 @@ const StudentProfile = () => {
         };
 
         fetchUserData();
-    }, []); // <--- Dependency array ko empty rakhein
+    }, []);
+
+    // ================= IMAGE UPLOAD =================
     const handleImageUpload = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
 
-        const uploadFormData = new FormData();
-        uploadFormData.append('file', file);
-        uploadFormData.append('upload_preset', 'ml_default');
+        // Validation
+        if (!file.type.startsWith("image/")) {
+            return toast.error("Please upload image file");
+        }
+
+        if (file.size > 2 * 1024 * 1024) {
+            return toast.error("Image must be under 2MB");
+        }
+
+        const form = new FormData();
+        form.append('file', file);
+        form.append('upload_preset', 'ml_default');
 
         const loadingToast = toast.loading("Uploading image...");
 
         try {
-            const response = await fetch('https://api.cloudinary.com/v1_1/doge2oezl/image/upload', {
-                method: 'POST',
-                body: uploadFormData
+            const res = await fetch(
+                'https://api.cloudinary.com/v1_1/doge2oezl/image/upload',
+                { method: 'POST', body: form }
+            );
+
+            const data = await res.json();
+            if (!res.ok) throw new Error("Upload failed");
+
+            await API.put('/users/profile/update', {
+                studentDetails: { idCardImage: data.secure_url }
             });
 
-            const data = await response.json();
+            setUser(prev => ({
+                ...prev,
+                studentDetails: {
+                    ...(prev?.studentDetails || {}),
+                    idCardImage: data.secure_url
+                }
+            }));
 
-            if (!response.ok) throw new Error(data.error?.message || "Upload failed");
+            toast.success("Image updated!", { id: loadingToast });
 
-            if (data.secure_url) {
-                // Backend ko update bhejna
-                await API.put('/users/profile/update', {
-                    studentDetails: { idCardImage: data.secure_url }
-                });
-
-                setUser(prev => ({
-                    ...prev,
-                    studentDetails: { ...prev.studentDetails, idCardImage: data.secure_url }
-                }));
-
-                toast.success("Image updated successfully!", { id: loadingToast });
-            }
-        } catch (error) {
-            console.error("Upload Error:", error);
-            // YE LINE ZAROORI HAI: Isse rotating animation ruk jayegi aur error dikhega
-            toast.error(error.message || "Upload failed!", { id: loadingToast });
+        } catch {
+            toast.error("Upload failed!", { id: loadingToast });
         }
     };
 
+    // ================= SAVE =================
     const handleSave = async (e) => {
         e.preventDefault();
         if (isSubmitting) return;
 
         setIsSubmitting(true);
-        const toastId = toast.loading("Saving changes...");
+        const toastId = toast.loading("Saving...");
 
         try {
-            const payload = {
-                parentDetails: { ...formData }
-            };
-
-            await API.put('/users/profile/update', payload);
-
-            // Success: Local user state update karein taaki UI sync rahe
-            setUser(prev => ({
-                ...prev,
-                parentDetails: { ...formData }
-            }));
-
-            toast.success("Profile updated successfully!", {
-                id: toastId,
-                duration: 4000
+            await API.put('/users/profile/update', {
+                parentDetails: formData
             });
 
-            setIsEditing(false); // Edit mode band
-        } catch (error) {
-            console.error("Update Error:", error);
-            toast.error("Failed to save. Please try again.", { id: toastId });
+            setUser(prev => ({
+                ...prev,
+                parentDetails: formData
+            }));
+
+            setIsEditing(false);
+            toast.success("Profile updated!", { id: toastId });
+
+        } catch {
+            toast.error("Save failed", { id: toastId });
         } finally {
-            setTimeout(() => {
-                setIsSubmitting(false);
-            }, 1000);
+            setIsSubmitting(false);
         }
     };
 
-
-    const handleImageClick = () => {
-        fileInputRef.current.click(); // Camera icon click karne par file selector khulega
-    };
+    // ================= LOADING UI =================
+    if (loading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <span className="text-lg font-semibold text-gray-500">
+                    Loading profile...
+                </span>
+            </div>
+        );
+    }
 
     return (
+        <div className="bg-[#fffaf5] min-h-screen text-[#1b140d]">
+            <Toaster position="top-center" />
 
-        <div className="bg-[#fffaf5] min-h-screen font-['Inter'] text-[#1b140d]">
-            <Toaster position="top-center" reverseOrder={false} />
-            <main className="max-w-[1280px] mx-auto px-4 md:px-8 py-10">
-                <div className="bg-white/70 backdrop-blur-xl rounded-[2.5rem] shadow-[0_20px_40px_-15px_rgba(240,153,66,0.15)] p-6 md:p-10">
-                    {/* NAYA OPTIMIZED HEADER CODE */}
+            <main className="max-w-6xl mx-auto px-4 py-10">
+                <div className="bg-white rounded-3xl shadow-xl p-6 md:p-10">
 
-                    <div className="flex flex-col md:flex-row items-center gap-8 pb-10 border-b border-dashed border-gray-200">
-                        <div className="relative group">
-                            {/* Profile Image / Initials */}
+                    {/* HEADER */}
+                    <div className="flex flex-col md:flex-row items-center gap-6 border-b pb-8">
+
+                        {/* PROFILE IMAGE */}
+                        <div className="relative">
                             {user?.studentDetails?.idCardImage ? (
                                 <img
-                                    src={user.studentDetails.idCardImage.replace('/upload/', '/upload/w_400,h_400,c_fill,g_face,q_auto,f_auto/')}
-                                    alt="Profile"
-                                    className="size-32 md:size-40 rounded-full border-4 border-white shadow-lg object-cover transition-transform group-hover:scale-105 cursor-pointer"
-                                    onClick={() => window.open(user.studentDetails.idCardImage, '_blank')}
-                                    title="Click to view full image"
+                                    src={user.studentDetails.idCardImage}
+                                    className="w-32 h-32 rounded-full object-cover border"
+                                    alt="profile"
                                 />
                             ) : (
-                                <div className="size-32 md:size-40 rounded-full border-4 border-white shadow-lg bg-gradient-to-br from-[#f09942] to-[#d87d2a] flex items-center justify-center text-white text-4xl font-black uppercase">
-                                    {user?.fullName?.charAt(0) || 'S'}
+                                <div className="w-32 h-32 rounded-full bg-orange-400 flex items-center justify-center text-white text-4xl font-bold">
+                                    {user?.fullName?.charAt(0) || "S"}
                                 </div>
                             )}
 
-                            {/* Camera Button: Triggers hidden input */}
-                            <div
-                                onClick={handleImageClick}
-                                className="absolute bottom-2 right-2 bg-white p-2.5 rounded-full shadow-md cursor-pointer hover:bg-orange-50 hover:text-[#f09942] transition-all border border-gray-100 z-10 active:scale-90"
+                            <button
+                                onClick={() => fileInputRef.current.click()}
+                                className="absolute bottom-0 right-0 bg-white rounded-full p-2 shadow"
                             >
-                                <span className="material-symbols-outlined text-sm font-bold">photo_camera</span>
-                            </div>
+                                📷
+                            </button>
 
-                            {/* Hidden Input Field */}
                             <input
-                                type="file"
                                 ref={fileInputRef}
-                                onChange={handleImageUpload}
-                                className="hidden"
+                                type="file"
                                 accept="image/*"
+                                className="hidden"
+                                onChange={handleImageUpload}
                             />
                         </div>
-                        <div className="flex flex-col items-center md:items-start text-center md:text-left">
-                            <div className="flex items-center gap-3 mb-2">
-                                <h1 className="text-3xl font-bold tracking-tight">{user?.fullName}</h1>
-                                <span className="px-3 py-1 bg-[#f09942]/10 text-[#f09942] text-xs font-bold uppercase rounded-full border border-[#f09942]/20">Student</span>
-                            </div>
 
-                            <p className="text-[#9a734c] text-lg font-medium mb-1">
+                        {/* BASIC INFO */}
+                        <div className="text-center md:text-left">
+                            <h1 className="text-2xl font-bold">
+                                {user?.fullName}
+                            </h1>
+
+                            <p className="text-gray-500">
                                 {user?.allocatedRoom
-                                    ? `Room ${user.allocatedRoom.roomNumber} • ${user.allocatedRoom.block}`
-                                    : 'No Room Allocated'} • Hostel Resident
+                                    ? `Room ${user.allocatedRoom.roomNumber}`
+                                    : "No Room Allocated"}
                             </p>
 
-                            <div className="flex items-center gap-2 text-gray-500 text-sm">
-                                <span className="material-symbols-outlined text-base">school</span>
-                                <span>{user?.studentDetails?.department} • Year {user?.studentDetails?.currentYear}</span>
-                            </div>
+                            <p className="text-sm text-gray-400">
+                                {user?.studentDetails?.department}
+                            </p>
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mt-10">
-                        {/* Left Column: Academic Details (Read Only) */}
-                        <div className="lg:col-span-4 flex flex-col gap-6">
-                            <div className="flex items-center gap-2 px-2">
-                                <span className="material-symbols-outlined text-gray-400">lock</span>
-                                <h2 className="text-xl font-bold">Academic Details</h2>
-                            </div>
-                            <div className="bg-white/50 rounded-2xl p-6 border border-white space-y-5">
-                                <DetailItem label="Roll Number" value={user?.studentDetails?.rollNumber} locked />
-                                <DetailItem label="Email Address" value={user?.email} locked />
-                                <DetailItem label="Department" value={user?.studentDetails?.department} locked />
-                                <div className="grid grid-cols-2 gap-4">
-                                    <DetailItem label="Batch" value={user?.studentDetails?.batch} />
-                                    <DetailItem label="Year" value={user?.studentDetails?.currentYear + " Year"} />
-                                </div>
-                                <p className="text-[10px] text-gray-400 italic text-center pt-4">Admin-managed fields are locked.</p>
-                            </div>
+                    {/* CONTENT */}
+                    <div className="grid lg:grid-cols-12 gap-8 mt-8">
+
+                        {/* ACADEMIC */}
+                        <div className="lg:col-span-4 space-y-4">
+                            <h2 className="font-bold">Academic Details</h2>
+
+                            <DetailItem label="Roll Number" value={user?.studentDetails?.rollNumber} />
+                            <DetailItem label="Email" value={user?.email} />
+                            <DetailItem label="Department" value={user?.studentDetails?.department} />
                         </div>
 
-                        {/* Right Column: Parent Details (Editable) */}
-                        <div className="lg:col-span-8 flex flex-col gap-6">
-                            <div className="flex items-center gap-2 px-2">
-                                <span className="material-symbols-outlined text-[#f09942]">family_restroom</span>
-                                <h2 className="text-xl font-bold">Parent / Guardian Details</h2>
-                            </div>
-                            {/* Parent Details Section */}
-                            <form onSubmit={handleSave} className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-gray-100 flex flex-col h-full">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        {/* PARENT */}
+                        <div className="lg:col-span-8">
+                            <form onSubmit={handleSave} className="space-y-6">
+
+                                <h2 className="font-bold text-lg">
+                                    Parent Details
+                                </h2>
+
+                                <div className="grid md:grid-cols-2 gap-4">
+
                                     <Input
                                         label="Guardian Name"
                                         value={formData.guardianName}
-                                        onChange={(val) => setFormData({ ...formData, guardianName: val })}
                                         disabled={!isEditing}
+                                        onChange={(v) =>
+                                            setFormData({ ...formData, guardianName: v })
+                                        }
                                     />
+
                                     <Input
                                         label="Relationship"
                                         value={formData.relation}
-                                        onChange={(val) => setFormData({ ...formData, relation: val })}
                                         disabled={!isEditing}
+                                        onChange={(v) =>
+                                            setFormData({ ...formData, relation: v })
+                                        }
                                     />
-                                    {/* ADD THESE THREE 👇 */}
+
                                     <Input
-                                        label="Contact Number"
+                                        label="Contact"
                                         value={formData.guardianContact}
-                                        onChange={(val) => setFormData({ ...formData, guardianContact: val })}
                                         disabled={!isEditing}
+                                        onChange={(v) =>
+                                            setFormData({ ...formData, guardianContact: v })
+                                        }
                                     />
-                                    <div className="md:col-span-2">
-                                        <Input
-                                            label="Permanent Home Address"
-                                            value={formData.address}
-                                            onChange={(val) => setFormData({ ...formData, address: val })}
-                                            disabled={!isEditing}
-                                        />
-                                    </div>
+
+                                    <Input
+                                        label="Address"
+                                        value={formData.address}
+                                        disabled={!isEditing}
+                                        onChange={(v) =>
+                                            setFormData({ ...formData, address: v })
+                                        }
+                                    />
+
                                 </div>
 
-                                <div className="flex justify-end gap-4 pt-6 border-t border-gray-50">
+                                {/* BUTTONS */}
+                                <div className="flex justify-end pt-4 border-t">
+
                                     {!isEditing ? (
-                                        // EDIT BUTTON: Jab user ko edit karna ho
                                         <button
                                             type="button"
                                             onClick={() => setIsEditing(true)}
-                                            className="flex items-center gap-2 font-bold py-3 px-10 rounded-2xl bg-gray-100 hover:bg-gray-200 text-gray-700 transition-all"
+                                            className="bg-gray-100 px-6 py-2 rounded-xl font-semibold"
                                         >
-                                            <span className="material-symbols-outlined">edit</span>
-                                            Edit Details
+                                            Edit
                                         </button>
                                     ) : (
-<div className="flex justify-end gap-4 pt-6 border-t border-gray-50">
-    {!isEditing ? (
-        <button
-            type="button" // <--- IMPORTANT: Ye form submit nahi karega
-            onClick={(e) => {
-                e.preventDefault(); // Extra safety
-                setIsEditing(true);
-            }}
-            className="flex items-center gap-2 font-bold py-3 px-10 rounded-2xl bg-gray-100 hover:bg-gray-200 text-gray-700 transition-all active:scale-95"
-        >
-            <span className="material-symbols-outlined">edit</span>
-            Edit Details
-        </button>
-    ) : (
-        <button
-            type="submit" // <--- Sirf ye submit karega
-            disabled={isSubmitting}
-            className={`flex items-center gap-2 font-bold py-3 px-10 rounded-2xl shadow-lg transition-all 
-                ${isSubmitting ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#f09942] hover:bg-[#d87d2a] text-white'} active:scale-95`}
-        >
-            {isSubmitting ? 'Saving...' : 'Save Changes'}
-        </button>
-    )}
-</div>
+                                        <button
+                                            type="submit"
+                                            disabled={isSubmitting}
+                                            className="bg-orange-400 text-white px-6 py-2 rounded-xl font-semibold"
+                                        >
+                                            {isSubmitting ? "Saving..." : "Save"}
+                                        </button>
                                     )}
+
                                 </div>
                             </form>
                         </div>
@@ -303,30 +286,26 @@ const StudentProfile = () => {
     );
 };
 
-// Helper Components
-const DetailItem = ({ label, value, locked = false }) => (
-    <div className="flex flex-col gap-1.5 opacity-80">
-        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{label}</label>
-        <div className="flex items-center justify-between bg-gray-50 rounded-xl px-4 py-3 border border-gray-100">
-            <span className="text-gray-700 font-semibold text-sm">{value || 'N/A'}</span>
-            {locked && <span className="material-symbols-outlined text-gray-300 text-sm">lock</span>}
-        </div>
+// ================= HELPER COMPONENTS =================
+
+const DetailItem = ({ label, value }) => (
+    <div>
+        <p className="text-xs text-gray-400">{label}</p>
+        <p className="font-semibold">{value || "N/A"}</p>
     </div>
 );
 
-const Input = ({ label, placeholder, value, onChange, disabled }) => (
-    <label className={`flex flex-col gap-2 ${disabled ? 'opacity-70' : ''}`}>
-        <span className="text-sm font-semibold">{label}</span>
+const Input = ({ label, value, onChange, disabled }) => (
+    <div>
+        <label className="text-sm font-semibold">{label}</label>
         <input
-            type="text"
-            placeholder={placeholder}
             value={value}
-            disabled={disabled} // Native input ko disable karega
+            disabled={disabled}
             onChange={(e) => onChange(e.target.value)}
-            className={`w-full h-12 rounded-xl border-gray-200 outline-none px-4 transition-all 
-                ${disabled ? 'bg-gray-50 cursor-not-allowed' : 'focus:border-[#f09942] focus:ring-2 focus:ring-[#f09942]/20'}`}
+            className={`w-full border rounded-lg px-3 py-2 mt-1 
+            ${disabled ? "bg-gray-100" : "focus:border-orange-400"}`}
         />
-    </label>
+    </div>
 );
 
 export default StudentProfile;

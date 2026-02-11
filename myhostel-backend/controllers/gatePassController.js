@@ -11,6 +11,11 @@ export const applyGatePass = async (req, res) => {
             destination,
             expectedInTime
         });
+        await createNotification(
+  req.user.id,
+  "Your Gate Pass request has been successfully submitted and is awaiting approval."
+);
+
         res.status(201).json({ message: "Gate Pass request sent!", newPass });
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -44,36 +49,69 @@ export const approveGatePass = async (req, res) => {
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
+    
 };
+
 
 export const markMovement = async (req, res) => {
     try {
         const { id } = req.params;
         const { type } = req.body;
 
-        const pass = await GatePass.findById(id).populate('student', 'fullName studentDetails');
-        if (!pass) return res.status(404).json({ message: "Gate Pass not found!" });
+        const pass = await GatePass
+            .findById(id)
+            .populate('student', 'fullName studentDetails');
 
+        if (!pass) {
+            return res.status(404).json({ message: "Gate Pass not found!" });
+        }
+
+        /* =======================
+           STUDENT MARKED OUT
+        ======================= */
         if (type === 'out') {
             pass.outTime = Date.now();
             pass.status = 'Out';
             await pass.save();
-            return res.status(200).json({ message: "Student marked OUT", pass });
-        } 
-        
-        if (type === 'in') {
-            // Check if student is late before deleting for the response message
-            const isLate = Date.now() > new Date(pass.expectedInTime).getTime();
-            
-            // STUDENT HOSTEL AA GAYA -> DELETE FROM DB
-            await GatePass.findByIdAndDelete(id);
 
-            return res.status(200).json({ 
-                message: isLate ? "Returned LATE! Record cleared." : "Welcome back! Pass cleared.",
-                lateEntry: isLate,
-                cleared: true 
+            // 🔔 Notification to student
+            await createNotification(
+                pass.student._id,
+                "You have been marked OUT by the gate authority. Please return before the expected time."
+            );
+
+            return res.status(200).json({
+                message: "Student marked OUT",
+                pass
             });
         }
+
+        /* =======================
+           STUDENT MARKED IN
+        ======================= */
+        if (type === 'in') {
+            const isLate = Date.now() > new Date(pass.expectedInTime).getTime();
+
+            // 🔔 Notification before deleting record
+            await createNotification(
+                pass.student._id,
+                isLate
+                    ? "You have returned LATE. Your entry has been recorded and the gate pass is now closed."
+                    : "Welcome back! Your gate pass has been successfully closed."
+            );
+
+            // STUDENT HOSTEL AA GAYA → DELETE RECORD
+            await GatePass.findByIdAndDelete(id);
+
+            return res.status(200).json({
+                message: isLate
+                    ? "Returned LATE! Record cleared."
+                    : "Welcome back! Pass cleared.",
+                lateEntry: isLate,
+                cleared: true
+            });
+        }
+
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -87,6 +125,10 @@ export const deleteGatePass = async (req, res) => {
         if (!pass) return res.status(404).json({ message: "Gate Pass record not found!" });
 
         await GatePass.findByIdAndDelete(id);
+await createNotification(
+  pass.student,
+  "Your Gate Pass record has been removed by the Administration."
+);
 
         res.status(200).json({ message: "Gate Pass record deleted successfully! 🗑️" });
     } catch (error) {
@@ -108,6 +150,11 @@ export const getPendingPasses = async (req, res) => {
 
         // If no passes found, send an empty array instead of 404 
         // (Better for frontend loading states)
+        await createNotification(
+  req.user.id, // warden/admin who opened dashboard
+  "You have new pending Gate Pass requests awaiting your review."
+);
+
         res.status(200).json(pendingPasses);
     } catch (error) {
         res.status(500).json({ 

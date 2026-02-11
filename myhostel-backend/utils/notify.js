@@ -6,6 +6,7 @@ export const createNotification = async (userId, message) => {
         await Notification.create({
             recipient: userId,
             message: message
+            
         });
     } catch (err) {
         console.error("Auto-Notification Error:", err);

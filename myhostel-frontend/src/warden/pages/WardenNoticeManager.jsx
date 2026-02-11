@@ -30,7 +30,7 @@ const WardenNoticeManager = () => {
     setLoading(true);
     try {
       const { data } = await API.get('/notice/all');
-      setNotices(data);
+      setNotices(Array.isArray(data) ? data : []);
     } catch (err) {
       toast.error("Failed to load notices");
     } finally {
@@ -90,7 +90,7 @@ const WardenNoticeManager = () => {
     <div className="min-h-screen bg-[#fffaf5] p-4 sm:p-6 md:p-12 font-display">
       <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-10">
 
-        {/* Left Side: Create Notice Form */}
+        {/* Left: Create Notice Form */}
         <div className="lg:col-span-5 space-y-6 md:space-y-8">
           <div className="space-y-2 text-center lg:text-left">
             <h1 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tighter italic uppercase">Broadcast</h1>
@@ -123,12 +123,12 @@ const WardenNoticeManager = () => {
                     <option value="Fee">Fee</option>
                     <option value="Holiday">Holiday</option>
                   </select>
-                  {/* Yeh raha arrow icon */}
                   <div className="absolute right-4 pointer-events-none text-slate-400">
                     <ChevronDown size={18} />
                   </div>
                 </div>
               </div>
+
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1">Attachment</label>
                 <label className="flex items-center justify-center p-3 md:p-4 bg-orange-50 text-orange-600 rounded-2xl cursor-pointer hover:bg-orange-100 transition-all border-2 border-dashed border-orange-200">
@@ -174,7 +174,7 @@ const WardenNoticeManager = () => {
           </form>
         </div>
 
-        {/* Right Side: Notice List */}
+        {/* Right: Notices List */}
         <div className="lg:col-span-7 space-y-6">
           <div className="flex items-center justify-between px-2 mt-4 lg:mt-0">
             <h2 className="text-lg md:text-xl font-black text-slate-900 italic uppercase tracking-tight">Active Notices</h2>
@@ -189,11 +189,10 @@ const WardenNoticeManager = () => {
                 key={notice._id}
                 className={`bg-white p-4 md:p-6 rounded-2xl md:rounded-3xl border min-h-[160px] md:min-h-[180px] flex flex-col ${notice.isEmergency ? 'border-red-100 bg-red-50/30' : 'border-slate-100'} shadow-sm relative transition-all hover:shadow-md`}
               >
-                {/* Header Section */}
                 <div className="flex justify-between items-start mb-2">
                   <div className="flex items-center gap-2 md:gap-3 overflow-hidden">
                     <div className={`p-2 md:p-3 rounded-xl md:rounded-2xl shrink-0 ${notice.isEmergency ? 'bg-red-500 text-white' : 'bg-slate-100 text-slate-500'}`}>
-                      {notice.isEmergency ? <AlertTriangle size={18} className="md:w-5 md:h-5" /> : <FileText size={18} className="md:w-5 md:h-5" />}
+                      {notice.isEmergency ? <AlertTriangle size={18} /> : <FileText size={18} />}
                     </div>
                     <div className="overflow-hidden">
                       <h3 className={`font-black tracking-tight truncate text-sm md:text-base ${notice.isEmergency ? 'text-red-600' : 'text-slate-800'}`}>
@@ -206,18 +205,16 @@ const WardenNoticeManager = () => {
                     </div>
                   </div>
                   <button onClick={() => handleDelete(notice._id)} className="p-2 shrink-0 text-slate-300 hover:text-red-500 rounded-xl transition-all">
-                    <Trash2 size={16} md:size={18} />
+                    <Trash2 size={18} />
                   </button>
                 </div>
 
-                {/* Content Section */}
                 <div className="pl-12 md:pl-14 flex-grow overflow-hidden mt-1">
                   <p className="text-xs md:text-sm text-slate-600 font-medium leading-relaxed h-[60px] md:h-[80px] overflow-y-auto no-scrollbar break-all md:break-words">
                     {notice.content}
                   </p>
                 </div>
 
-                {/* Attachment Link */}
                 {notice.attachmentUrl && (
                   <div className="pl-12 md:pl-14 mt-2">
                     <a

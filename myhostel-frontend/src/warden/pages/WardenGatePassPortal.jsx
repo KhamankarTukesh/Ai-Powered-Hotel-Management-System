@@ -49,7 +49,7 @@ const WardenGatePassPortal = () => {
     }
   };
 
-  // IMPROVED FILTER: Searches by Name OR Roll Number
+  // Filter by Name OR Roll Number
   const filteredPasses = passes.filter(p => {
     const name = p.student?.fullName?.toLowerCase() || "";
     const roll = p.student?.studentDetails?.rollNumber?.toLowerCase() || "";
@@ -60,8 +60,8 @@ const WardenGatePassPortal = () => {
   return (
     <div className="min-h-screen bg-[#fffaf5] p-4 md:p-12 font-display">
       <div className="max-w-6xl mx-auto">
-        
-        {/* HEADER SECTION */}
+
+        {/* HEADER */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
           <div className="flex items-center gap-4 md:gap-5">
             <button 
@@ -81,12 +81,12 @@ const WardenGatePassPortal = () => {
           </div>
 
           {/* SEARCH BAR */}
-          <div className="relative group w-full md:w-80">
+          <div className="relative group w-full md:w-80 mt-3 md:mt-0">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-orange-500 transition-colors" size={18} />
             <input 
               type="text"
               placeholder="Search Name or Roll No..."
-              className="w-full pl-12 pr-4 py-4 bg-white border border-orange-100 rounded-2xl text-xs font-bold outline-none shadow-sm focus:ring-2 ring-orange-100 transition-all placeholder:text-slate-300"
+              className="w-full pl-12 pr-4 py-3 sm:py-4 bg-white border border-orange-100 rounded-2xl text-xs sm:text-sm font-bold outline-none shadow-sm focus:ring-2 ring-orange-100 transition-all placeholder:text-slate-300"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -100,25 +100,27 @@ const WardenGatePassPortal = () => {
             <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Loading Requests...</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
+
             {filteredPasses.length > 0 ? (
               filteredPasses.map((pass) => (
                 <div key={pass._id} className="bg-white rounded-[2rem] md:rounded-[3rem] p-6 md:p-8 shadow-xl border border-orange-50 flex flex-col justify-between hover:shadow-2xl hover:border-orange-200 transition-all relative overflow-hidden group">
-                  
+
                   {/* Decorative Background Icon */}
                   <LogOut className="absolute -right-6 -top-6 text-orange-50/50 w-24 h-24 md:w-32 md:h-32 rotate-12 group-hover:text-orange-100 transition-colors" />
 
                   <div className="relative z-10">
+
                     {/* Student Info */}
-                    <div className="flex items-center gap-4 md:gap-5 mb-6 md:mb-8">
-                      <div className="w-12 h-12 md:w-16 md:h-16 bg-slate-900 rounded-2xl md:rounded-3xl flex items-center justify-center text-white shadow-lg">
+                    <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 md:gap-5 mb-6 md:mb-8">
+                      <div className="w-12 h-12 md:w-16 md:h-16 bg-slate-900 rounded-2xl md:rounded-3xl flex items-center justify-center text-white shadow-lg flex-shrink-0">
                         <User size={24} />
                       </div>
-                      <div>
-                        <h3 className="text-lg md:text-xl font-black text-slate-800 uppercase italic leading-none mb-1">
+                      <div className="text-center sm:text-left">
+                        <h3 className="text-lg md:text-xl font-black text-slate-800 uppercase italic leading-none mb-1 truncate">
                           {pass.student?.fullName || "Unknown Student"}
                         </h3>
-                        <span className="text-[10px] font-black bg-orange-50 text-orange-600 px-3 py-1 rounded-full uppercase tracking-tighter">
+                        <span className="text-[10px] sm:text-xs font-black bg-orange-50 text-orange-600 px-3 py-1 rounded-full uppercase tracking-tighter inline-block mt-1">
                           Roll: {pass.student?.studentDetails?.rollNumber || 'N/A'}
                         </span>
                       </div>
@@ -130,22 +132,22 @@ const WardenGatePassPortal = () => {
                         <p className="text-[9px] font-black text-slate-400 uppercase mb-2 flex items-center gap-1">
                           <MapPin size={12} className="text-orange-500"/> Destination
                         </p>
-                        <p className="text-xs md:text-sm font-black text-slate-700 uppercase">{pass.destination}</p>
+                        <p className="text-xs md:text-sm font-black text-slate-700 uppercase truncate">{pass.destination}</p>
                       </div>
                       <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
                         <p className="text-[9px] font-black text-slate-400 uppercase mb-2 flex items-center gap-1">
                           <CalendarDays size={12} className="text-orange-500"/> Expected Return
                         </p>
-                        <p className="text-xs md:text-sm font-black text-slate-700">
+                        <p className="text-xs md:text-sm font-black text-slate-700 truncate">
                            {new Date(pass.expectedInTime).toLocaleDateString([], { day: '2-digit', month: 'short' })}, {new Date(pass.expectedInTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </p>
                       </div>
                     </div>
 
                     {/* Reason Box */}
-                    <div className="mb-8 bg-orange-50/30 p-4 rounded-2xl border border-dashed border-orange-100">
+                    <div className="mb-6 md:mb-8 bg-orange-50/30 p-4 rounded-2xl border border-dashed border-orange-100">
                        <p className="text-[9px] font-black text-orange-400 uppercase tracking-widest mb-1 italic">Student Reason:</p>
-                       <p className="text-xs font-bold text-slate-600 leading-relaxed italic">
+                       <p className="text-xs md:text-sm font-bold text-slate-600 leading-relaxed italic break-words">
                          "{pass.reason}"
                        </p>
                     </div>
@@ -156,7 +158,7 @@ const WardenGatePassPortal = () => {
                     <button
                       onClick={() => handleAction(pass._id, 'Approved')}
                       disabled={btnLoading === pass._id}
-                      className="flex-[2] bg-slate-900 text-white px-6 py-4 md:py-5 rounded-2xl font-black text-[10px] md:text-xs uppercase tracking-widest hover:bg-green-600 transition-all flex items-center justify-center gap-3 shadow-lg active:scale-95 disabled:opacity-50"
+                      className="flex-[2] bg-slate-900 text-white px-6 py-3 md:py-4 rounded-2xl font-black text-[10px] md:text-xs uppercase tracking-widest hover:bg-green-600 transition-all flex items-center justify-center gap-2 shadow-lg active:scale-95 disabled:opacity-50 w-full sm:w-auto"
                     >
                       {btnLoading === pass._id ? <Loader2 className="animate-spin" size={16}/> : <CheckCircle2 size={18} />}
                       Approve Request
@@ -164,7 +166,7 @@ const WardenGatePassPortal = () => {
                     <button
                       onClick={() => handleAction(pass._id, 'Rejected')}
                       disabled={btnLoading === pass._id}
-                      className="flex-1 bg-white border-2 border-slate-100 text-slate-400 px-4 py-4 md:py-5 rounded-2xl font-black text-[10px] md:text-xs uppercase tracking-widest hover:bg-red-50 hover:text-red-500 hover:border-red-100 transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50"
+                      className="flex-1 bg-white border-2 border-slate-100 text-slate-400 px-4 py-3 md:py-4 rounded-2xl font-black text-[10px] md:text-xs uppercase tracking-widest hover:bg-red-50 hover:text-red-500 hover:border-red-100 transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 w-full sm:w-auto"
                     >
                       <XCircle size={18} />
                       Reject
@@ -173,15 +175,16 @@ const WardenGatePassPortal = () => {
                 </div>
               ))
             ) : (
-              <div className="col-span-full flex flex-col items-center justify-center py-32 bg-white rounded-[2rem] md:rounded-[4rem] border-2 border-dashed border-slate-100 shadow-inner">
+              <div className="col-span-full flex flex-col items-center justify-center py-24 md:py-32 bg-white rounded-[2rem] md:rounded-[4rem] border-2 border-dashed border-slate-100 shadow-inner">
                 <div className="p-6 bg-slate-50 rounded-full mb-4">
                    <Clock className="text-slate-300" size={48} />
                 </div>
-                <p className="text-slate-400 font-black italic uppercase tracking-widest text-center px-6">
+                <p className="text-slate-400 font-black italic uppercase tracking-widest text-center px-6 text-sm md:text-base">
                   {searchTerm ? "No requests match your search" : "No pending gate pass requests"}
                 </p>
               </div>
             )}
+
           </div>
         )}
       </div>
