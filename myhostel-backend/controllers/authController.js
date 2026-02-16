@@ -216,7 +216,7 @@ export const forgotPassword = async (req, res) => {
 
         // Email bhejna - Isko alag try-catch mein rakha hai taaki crash na ho
         try {
-            await sendEmail(
+             sendEmail(
                 user.email,
                 "Password Reset OTP - Dnyanda Hostel",
                 `Your OTP for password reset is: ${otpCode}. It is valid for 10 minutes.`
