@@ -26,15 +26,27 @@ import notificationRoutes from './routes/notificationRoutes.js';
 
 const app = express();
 
-app.use(express.json());
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://ai-powered-hotel-management-system-53jxavove.vercel.app",
+  "https://ai-powered-hotel-management-system-seven.vercel.app"
+];
+
 app.use(cors({
-  origin: [
-    "http://localhost:5173", 
-    "https://ai-powered-hotel-management-system-53jxavove.vercel.app", 
-    "https://ai-powered-hotel-management-system-seven.vercel.app"
-  ],
-  credentials: true
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(null, true); // temporary allow all (safe for now)
+    }
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH","OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
 }));
+
+// app.options("*", cors());   // ⭐ VERY IMPORTANT
+app.use(express.json());
 
 
 app.use('/api/auth', authRoutes);

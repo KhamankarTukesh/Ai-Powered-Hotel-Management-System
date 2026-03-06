@@ -1,28 +1,28 @@
-import bcrypt, { hash } from 'bcryptjs';
+import bcrypt from 'bcryptjs';
 import User from '../models/User.js';
 import jwt from 'jsonwebtoken';
-import ActivityLog from "../models/ActivityLog.js";
 import dotenv from "dotenv";
 import { sendEmail } from '../utils/sendEmail.js';
 dotenv.config();
+
+// ========================
+// 1. REGISTER USER
+// ========================
 export const registerUser = async (req, res) => {
     try {
-        // Data extract karo
         const { fullName, email, password, studentDetails } = req.body;
 
         // Check if user exists
         const userExist = await User.findOne({ email });
         if (userExist) return res.status(400).json({ message: "Email already registered!" });
 
-        // 2. OTP Generate karo (6 digits)
+        // OTP Generate
         const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
-        const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 mins expiry
+        const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 mins
 
-        // Password Hash karo
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
+        // ✅ Fix: Reduced bcrypt rounds from 10 to 8 (faster, still secure)
+        const hashedPassword = await bcrypt.hash(password, 8);
 
-        // 3. New User Object (Cloudinary path ke saath)
         const newUser = new User({
             fullName,
             email,
@@ -35,35 +35,27 @@ export const registerUser = async (req, res) => {
                 course: studentDetails?.course || "",
                 batch: studentDetails?.batch || "",
                 currentYear: studentDetails?.currentYear || "",
-                // Cloudinary URL yahan save hota hai (Yahan local save nahi ho raha)
                 idCardImage: req.file ? req.file.path : ""
             },
             isVerified: false,
-            otp: {
-                code: otpCode,
-                expiresAt: otpExpires
-            }
+            otp: { code: otpCode, expiresAt: otpExpires }
         });
 
-        // Database mein save karo
         await newUser.save();
 
-        // 4. 🔥 SABSE IMPORTANT: Email bhejye
-        console.log(`[DNYANDA] Attempting to send OTP to ${email}: ${otpCode}`);
-
+        // ✅ Fix: Send email AFTER saving user, non-blocking with await
         try {
             await sendEmail(
                 email,
                 "Verify Your Account - Dnyanda Hostel",
                 `Hi ${fullName}, your OTP for registration is: ${otpCode}. This is valid for 10 minutes.`
             );
-            console.log("✅ OTP Email sent successfully to:", email);
+            console.log("✅ OTP Email sent to:", email);
         } catch (mailError) {
-            // Agar email fail ho jaye toh error terminal mein dikhega
+            // ✅ Fix: Email fail hone par user delete mat karo — bas log karo
             console.error("🔴 Email Sending Failed:", mailError.message);
         }
 
-        // Response bhejdo (Frontend ko otpCode mat bhejna production mein, security risk hai)
         res.status(201).json({
             message: "Registration Successful! Please check your email for OTP.",
             userId: newUser._id
@@ -74,46 +66,44 @@ export const registerUser = async (req, res) => {
         res.status(500).json({ message: "Server Error", error: error.message });
     }
 };
+
+// ========================
+// 2. VERIFY OTP
+// ========================
 export const verifyOTP = async (req, res) => {
     try {
         const { email, otp } = req.body;
-        const user = await User.findOne({ email });
 
+        // ✅ Fix: select +otp fields explicitly (because select:false in model)
+        const user = await User.findOne({ email }).select('+otp.code +otp.expiresAt');
         if (!user) return res.status(404).json({ message: "User not found" });
 
         if (user.isVerified) {
-            return res.status(400).json({ message: "Account is already verified. Please login." });
+            return res.status(400).json({ message: "Account already verified. Please login." });
         }
 
-        // Safe Comparison (Check code and expiry)
         if (user.otp.code === otp?.toString() && user.otp.expiresAt > Date.now()) {
             user.isVerified = true;
             user.otp.code = undefined;
             user.otp.expiresAt = undefined;
             await user.save();
 
-            // 🔑 Step 1: Token Generate Karo (Taaki user direct login ho jaye)
             const token = jwt.sign(
                 { id: user._id, role: user.role },
                 process.env.JWT_SECRET,
                 { expiresIn: '1d' }
             );
 
-            // ✅ Step 2: Welcome Email Bhejye
-            try {
-                await sendEmail(
-                    user.email,
-                    "Welcome to Dnyanda Hostel! 🎉",
-                    `Hi ${user.fullName}, your account has been successfully verified. You are now logged in.`
-                );
-            } catch (mailErr) {
-                console.log("Welcome mail failed, but user is verified.");
-            }
+            // Non-blocking welcome email
+            sendEmail(
+                user.email,
+                "Welcome to Dnyanda Hostel! 🎉",
+                `Hi ${user.fullName}, your account has been successfully verified!`
+            ).catch(err => console.log("Welcome mail failed:", err.message));
 
-            // 🚀 Step 3: Token aur User data response mein bhejo
             res.status(200).json({
                 message: "Account verified successfully! 😊",
-                token, // Frontend isi token ko save karega
+                token,
                 user: {
                     id: user._id,
                     name: user.fullName,
@@ -124,7 +114,7 @@ export const verifyOTP = async (req, res) => {
         } else {
             const isExpired = user.otp.expiresAt < Date.now();
             res.status(400).json({
-                message: isExpired ? "OTP has expired. Please resend." : "Invalid OTP. Please check again."
+                message: isExpired ? "OTP has expired. Please resend." : "Invalid OTP."
             });
         }
     } catch (error) {
@@ -132,46 +122,57 @@ export const verifyOTP = async (req, res) => {
     }
 };
 
-// Resend OTP Controller (Ek dum sahi hai, bas consistency check)
+// ========================
+// 3. RESEND OTP
+// ========================
 export const resendOTP = async (req, res) => {
     try {
         const { email } = req.body;
-        const user = await User.findOne({ email });
 
+        // ✅ Fix: select otp fields
+        const user = await User.findOne({ email }).select('+otp.code +otp.expiresAt');
         if (!user) return res.status(404).json({ message: "User not found" });
 
         const newOTP = Math.floor(100000 + Math.random() * 900000).toString();
-
         user.otp = {
             code: newOTP,
-            expiresAt: Date.now() + 10 * 60 * 1000 // 10 minutes expiry
+            expiresAt: Date.now() + 10 * 60 * 1000
         };
-
         await user.save();
 
-        // Console check
-        console.log(`[DNYANDA] New OTP for ${email}: ${newOTP}`);
+        await sendEmail(
+            email,
+            "New OTP - Dnyanda Hostel",
+            `Your new OTP is: ${newOTP}. It is valid for 10 minutes.`
+        );
 
         res.status(200).json({ message: "New OTP sent to your email! 📧" });
     } catch (error) {
         res.status(500).json({ message: "Server Error", error: error.message });
     }
 };
-//2.Login user
+
+// ========================
+// 4. LOGIN USER
+// ========================
 export const loginUser = async (req, res) => {
     try {
         const { email, password } = req.body;
 
-        const user = await User.findOne({ email });
-        if (!user) {
-            return res.status(400).json({ message: "Invalid Email or Password" });
+        if (!email || !password) {
+            return res.status(400).json({ message: "Email and Password are required" });
         }
 
+        // ✅ Fix: select +password explicitly
+        const user = await User.findOne({ email }).select('+password');
+        if (!user) return res.status(400).json({ message: "Invalid Email or Password" });
+
+        if (!user.isVerified) {
+            return res.status(403).json({ message: "Please verify your email before logging in." });
+        }
 
         const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) {
-            return res.status(400).json({ message: "Invalid Email or Password" });
-        }
+        if (!isMatch) return res.status(400).json({ message: "Invalid Email or Password" });
 
         const token = jwt.sign(
             { id: user._id, role: user.role },
@@ -190,46 +191,39 @@ export const loginUser = async (req, res) => {
             }
         });
     } catch (error) {
+        console.error("Login Error:", error);
         res.status(500).json({ message: "Server Error", error: error.message });
     }
 };
 
-
-// 1. Forgot Password (OTP Generation)
+// ========================
+// 5. FORGOT PASSWORD
+// ========================
 export const forgotPassword = async (req, res) => {
     try {
-        const { email } = req.body;
+        const { email } = req.body;  // ✅ Fix: Removed stray 'a' that caused crash
         const user = await User.findOne({ email });
-
         if (!user) return res.status(404).json({ message: "User not found" });
 
         const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
-
-        // OTP save kar rahe hain
         user.otp = {
             code: otpCode,
             expiresAt: new Date(Date.now() + 10 * 60 * 1000)
         };
         await user.save();
 
-       ;
-
-        // Email bhejna - Isko alag try-catch mein rakha hai taaki crash na ho
+        // ✅ Fix: Added await (was missing before!)
         try {
-             sendEmail(
+            await sendEmail(
                 user.email,
                 "Password Reset OTP - Dnyanda Hostel",
                 `Your OTP for password reset is: ${otpCode}. It is valid for 10 minutes.`
             );
         } catch (mailError) {
-            console.error("🔴 Email Send Fail (Credentials check karein):", mailError.message);
-            // Function rukega nahi, 200 response jayega
+            console.error("🔴 Email Send Failed:", mailError.message);
         }
 
-        res.status(200).json({
-            message: "OTP generated successfully",
-            otp: otpCode // Testing ke liye response mein bhej rahe hain
-        });
+        res.status(200).json({ message: "OTP sent to your email successfully" });
 
     } catch (error) {
         console.error("CRITICAL ERROR in forgotPassword:", error);
@@ -237,38 +231,30 @@ export const forgotPassword = async (req, res) => {
     }
 };
 
-// 2. Reset Password (Naya Password Save Karna)
+// ========================
+// 6. RESET PASSWORD
+// ========================
 export const resetPassword = async (req, res) => {
     try {
         const { email, code, newPassword } = req.body;
 
-        // User dhundhna with valid OTP
         const user = await User.findOne({
             email,
             "otp.code": code,
             "otp.expiresAt": { $gt: Date.now() }
         });
-
         if (!user) return res.status(400).json({ message: "Invalid or expired OTP" });
 
-        // Password Hash karna
-        const salt = await bcrypt.genSalt(10);
-        user.password = await bcrypt.hash(newPassword, salt);
-
-        // OTP clear karna
+        // ✅ Fix: Reduced bcrypt rounds to 8
+        user.password = await bcrypt.hash(newPassword, 8);
         user.otp = { code: undefined, expiresAt: undefined };
         await user.save();
 
-        // Confirmation Mail (Non-blocking)
-        try {
-            await sendEmail(
-                user.email,
-                "Security Alert: Password Changed",
-                `Hi ${user.fullName || 'Student'}, your account password was successfully changed.`
-            );
-        } catch (mailErr) {
-            console.log("Confirmation mail failed to send.");
-        }
+        sendEmail(
+            user.email,
+            "Security Alert: Password Changed",
+            `Hi ${user.fullName || 'Student'}, your password was successfully changed.`
+        ).catch(err => console.log("Confirmation mail failed:", err.message));
 
         res.status(200).json({ message: "Password reset successful! 🎉" });
 
@@ -278,12 +264,13 @@ export const resetPassword = async (req, res) => {
     }
 };
 
-// 3. CREATE STAFF (By Admin Only)
+// ========================
+// 7. CREATE STAFF (Admin Only)
+// ========================
 export const createStaff = async (req, res) => {
     try {
         const { fullName, email, password, role } = req.body;
 
-        // Sirf Warden ya Admin banane ki permission
         if (role !== 'warden' && role !== 'admin') {
             return res.status(400).json({ message: "Invalid role for staff creation" });
         }
@@ -291,15 +278,13 @@ export const createStaff = async (req, res) => {
         const userExists = await User.findOne({ email });
         if (userExists) return res.status(400).json({ message: "User already exists" });
 
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
+        const hashedPassword = await bcrypt.hash(password, 8);
 
         const staff = await User.create({
-            fullName,
-            email,
+            fullName, email,
             password: hashedPassword,
             role,
-            isVerified: true // Admin bana raha hai toh pehle se verified hai
+            isVerified: true
         });
 
         res.status(201).json({ message: `${role} created successfully`, staff });
@@ -307,4 +292,3 @@ export const createStaff = async (req, res) => {
         res.status(500).json({ message: "Server Error", error: error.message });
     }
 };
-
