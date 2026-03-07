@@ -1,11 +1,7 @@
 import axios from 'axios';
 
-// ✅ Fix: hardcoded production URL — no more localhost issue
-const BASE_URL = import.meta.env.VITE_API_URL 
-    || 'https://ai-powered-hotel-management-system-m8eg.onrender.com/api';
-
 const API = axios.create({
-    baseURL: BASE_URL,
+    baseURL: import.meta.env.VITE_API_URL,
     headers: {
         'Content-Type': 'application/json',
     },
@@ -27,18 +23,6 @@ API.interceptors.request.use(
         return config;
     },
     (error) => Promise.reject(error)
-);
-
-// ✅ Auto handle 401 — redirect to login if token expired
-API.interceptors.response.use(
-    (response) => response,
-    (error) => {
-        if (error.response?.status === 401) {
-            localStorage.clear();
-            window.location.href = '/login';
-        }
-        return Promise.reject(error);
-    }
 );
 
 export default API;
