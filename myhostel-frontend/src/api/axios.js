@@ -12,11 +12,12 @@ API.interceptors.request.use(
         const token = localStorage.getItem('token');
 
         const isAuthRoute =
-            config.url.includes('/login') ||
-            config.url.includes('/register') ||
-            config.url.includes('/verify-otp');
+            config.url?.includes('/login') ||
+            config.url?.includes('/register') ||
+            config.url?.includes('/verify-otp');
 
         if (token && !isAuthRoute) {
+            config.headers = config.headers || {};
             config.headers.Authorization = `Bearer ${token}`;
         }
 
