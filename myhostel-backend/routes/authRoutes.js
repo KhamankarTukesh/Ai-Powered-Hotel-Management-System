@@ -2,6 +2,7 @@ import express from 'express';
 import { registerUser, loginUser, createStaff, verifyOTP, resendOTP,forgotPassword, resetPassword} from '../controllers/authController.js';
 import { protect, adminOnly } from '../middleware/authMiddleware.js';
 import multer from 'multer';
+import { sendEmail } from '../utils/sendEmail.js'; 
 
 import { storage } from '../config/cloudinary.js'; 
 
