@@ -31,7 +31,7 @@ router.get('/test-email', async (req, res) => {
         await sendEmail(
             'tukeshofficial072@gmail.com',
             'Test from Render',
-            'If you see this, email works on Render!'
+            'Resend is working!'
         );
         res.json({ success: true, message: 'Email sent!' });
     } catch (err) {
