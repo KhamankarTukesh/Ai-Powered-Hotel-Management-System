@@ -27,7 +27,7 @@ router.post('/create-staff', protect, adminOnly, createStaff);
 router.get('/test-email', async (req, res) => {
     try {
         await sendEmail(
-            'youremail@gmail.com',
+            'tukeshofficial072@gmail.com',
             'Test from Render',
             'If you see this, email works on Render!'
         );
