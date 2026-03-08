@@ -26,16 +26,7 @@ router.post('/reset-password', resetPassword);
 router.post('/create-staff', protect, adminOnly, createStaff);
 
 router.get('/test-email', async (req, res) => {
-    try {
-        await sendEmail(
-            'tukeshofficial072@gmail.com',
-            'Test from Render',
-            'If you see this, email works on Render!'
-        );
-        res.json({ success: true, message: 'Email sent!' });
-    } catch (err) {
-        res.json({ success: false, error: err.message }); // ← this shows EXACT problem
-    }
+    res.json({ success: true, message: 'Route is working!' });
 });
 
 export default router;
