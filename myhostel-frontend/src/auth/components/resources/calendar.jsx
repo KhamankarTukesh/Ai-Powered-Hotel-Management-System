@@ -6,7 +6,9 @@ import {
     X, Calendar, Filter, Download
 } from 'lucide-react';
 
-
+// ─────────────────────────────────────────────
+// DATA
+// ─────────────────────────────────────────────
 const calendarEvents = {
     '2025-07-01': [{ label: 'Academic Year Begins', type: 'important' }],
     '2025-07-15': [{ label: 'Hostel Allotment Deadline', type: 'deadline' }],
@@ -413,14 +415,22 @@ const CalendarPage = ({ onBack }) => {
                     </div>
                 </div>
 
-                {/* ── Back button ── */}
-                <button
-                    onClick={() => onBack()}
-                    className="w-full flex items-center justify-center gap-2 bg-white border border-orange-200 text-orange-500 font-black text-sm py-3.5 rounded-2xl hover:bg-orange-50 transition-all mt-8"
-                >
-                    <ChevronLeft size={16} />
-                    Back to All Resources
-                </button>
+                {/* ── Back + Dashboard buttons ── */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-8">
+                    <button
+                        onClick={() => onBack()}
+                        className="w-full flex items-center justify-center gap-2 bg-white border border-orange-200 text-orange-500 font-black text-sm py-3.5 rounded-2xl hover:bg-orange-50 transition-all"
+                    >
+                        <ChevronLeft size={16} />
+                        Back to Resources
+                    </button>
+                    <button
+                        onClick={() => window.location.href = '/student/dashboard'}
+                        className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-orange-500 to-amber-400 text-white font-black text-sm py-3.5 rounded-2xl hover:opacity-90 transition-all shadow-md shadow-orange-100"
+                    >
+                        Go to Dashboard →
+                    </button>
+                </div>
             </div>
 
             {/* Footer */}
