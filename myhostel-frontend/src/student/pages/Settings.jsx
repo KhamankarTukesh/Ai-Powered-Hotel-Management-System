@@ -2,195 +2,133 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import API from '../../api/axios';
 import { toast } from 'react-hot-toast';
+import { ShieldCheck, Phone, KeyRound, MailCheck, Trash2, FileText } from 'lucide-react';
 
 const Settings = () => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
 
-    const user = JSON.parse(localStorage.getItem('user'));
+    const user  = JSON.parse(localStorage.getItem('user') || '{}');
     const email = user?.email;
 
     const handleResetRequest = async () => {
         try {
             if (!email) return toast.error("Please login again!");
             setLoading(true);
-
-            const response = await API.post('/auth/forgot-password', { email });
-
-            if (response.status === 200) {
+            const res = await API.post('/auth/forgot-password', { email });
+            if (res.status === 200) {
                 toast.success("OTP sent! Redirecting...");
-                setTimeout(() => {
-                    navigate('/reset-password', { state: { email } });
-                }, 1500);
+                setTimeout(() => navigate('/reset-password', { state: { email } }), 1500);
             }
         } catch (err) {
-            toast.error(err.response?.data?.message || "Reset request failed");
-        } finally {
-            setLoading(false);
-        }
+            toast.error(err.response?.data?.message || "Reset failed");
+        } finally { setLoading(false); }
     };
 
     const handleVerifyRequest = async () => {
         try {
             setLoading(true);
-
-            const response = await API.post('/auth/resend-otp', { email });
-
-            if (response.status === 200) {
+            const res = await API.post('/auth/resend-otp', { email });
+            if (res.status === 200) {
                 toast.success("Verification OTP sent!");
                 navigate('/verify-account', { state: { email } });
             }
         } catch (err) {
             toast.error(err.response?.data?.message || "Verification failed");
-        } finally {
-            setLoading(false);
-        }
+        } finally { setLoading(false); }
     };
 
+    // ✅ No delete route — sends warden notification only
     const handleDeleteRequest = async () => {
-        const confirmDelete = window.confirm(
-            "Are you sure you want to request account deletion? This will alert the warden."
-        );
-
-        if (!confirmDelete) return;
-
+        if (!window.confirm("This will send a deletion request to the warden. Continue?")) return;
         try {
             await API.post('/notifications/admin-request', {
                 type: 'DELETE_ACCOUNT',
                 message: `${user?.fullName || 'Student'} (${email}) has requested account deletion.`
             });
-
-            toast.success("Deletion request sent to Admin.");
+            toast.success("Request sent to warden.");
         } catch {
-            toast.error("Request failed. Please contact the warden directly.");
+            toast.error("Failed. Please contact warden directly.");
         }
     };
 
     return (
-        <div className="min-h-screen bg-slate-50 pt-24 sm:pt-28 px-4 sm:px-6 pb-10 font-sans">
+        <div className="min-h-screen bg-[#fdf9f6] px-4 sm:px-6 pb-10" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+            <style>{`@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;900&display=swap');`}</style>
 
-            <div className="max-w-5xl mx-auto space-y-6">
+            <div className="max-w-3xl mx-auto space-y-5">
 
-                {/* HEADER */}
-                <div className="flex items-center gap-3 sm:gap-4 px-1 sm:px-2">
-                    <div className="h-10 w-10 sm:h-12 sm:w-12 bg-indigo-600 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-100">
-                        <span className="material-symbols-outlined text-white text-2xl sm:text-3xl">
-                            settings
-                        </span>
+                {/* Header */}
+                <div className="flex items-center gap-3 pt-2">
+                    <div className="w-10 h-10 bg-orange-500 rounded-2xl flex items-center justify-center shadow-md shadow-orange-200">
+                        <ShieldCheck size={20} className="text-white" />
                     </div>
-
-                    <h1 className="text-2xl sm:text-3xl font-black text-slate-800 tracking-tight">
-                        SETTINGS
-                    </h1>
+                    <div>
+                        <h1 className="text-xl font-black text-slate-800 leading-none">Settings</h1>
+                        <p className="text-xs text-slate-400 font-medium">Account & preferences</p>
+                    </div>
                 </div>
 
-                {/* TOP CARDS */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Top Cards */}
+                <div className="grid sm:grid-cols-2 gap-4">
 
-                    {/* POLICY CARD */}
-                    <div className="bg-white rounded-3xl sm:rounded-[2.5rem] p-6 sm:p-8 border border-slate-100 shadow-sm flex flex-col justify-between">
-
-                        <div className="mb-6">
-                            <h2 className="text-base sm:text-lg font-bold text-slate-800">
-                                Hostel Policy
-                            </h2>
-
-                            <p className="text-xs text-slate-500">
-                                Download the latest rules & regulations PDF.
-                            </p>
+                    {/* Policy */}
+                    <div className="bg-white rounded-3xl border border-orange-100 p-6 flex flex-col justify-between gap-4">
+                        <div>
+                            <p className="text-[10px] font-black text-orange-500 uppercase tracking-widest mb-1">Hostel Policy</p>
+                            <p className="text-sm text-slate-500">Download the latest rules & regulations PDF.</p>
                         </div>
-
-                        <a
-                            href="/hostel-details.pdf"
-                            className="flex items-center justify-center gap-3 p-3 sm:p-4 rounded-2xl sm:rounded-3xl bg-blue-600 text-white font-bold hover:bg-blue-700 transition-all"
-                        >
-                            SEE HOSTEL DETAILS
+                        <a href="/hostel-details.pdf"
+                            className="flex items-center justify-center gap-2 py-3 rounded-2xl bg-orange-500 text-white font-black text-sm hover:bg-orange-600 transition-all shadow-md shadow-orange-100">
+                            <FileText size={15} /> View Hostel Details
                         </a>
-
                     </div>
 
-                    {/* SUPPORT CARD */}
-                    <div className="bg-white rounded-3xl sm:rounded-[2.5rem] p-6 sm:p-8 border border-slate-100 shadow-sm flex flex-col justify-between">
-
-                        <div className="mb-6">
-                            <h2 className="text-base sm:text-lg font-bold text-slate-800">
-                                Warden Support
-                            </h2>
-
-                            <p className="text-xs text-slate-500 mb-3">
-                                Direct contact for emergencies.
-                            </p>
-
-                            <div className="flex items-center gap-2 text-green-600 bg-green-50 w-fit px-3 sm:px-4 py-2 rounded-xl sm:rounded-2xl border border-green-100">
-                                <span className="material-symbols-outlined text-sm">
-                                    call
-                                </span>
-
-                                <span className="text-sm font-black tracking-wider">
-                                    +91 98765 43210
-                                </span>
+                    {/* Support */}
+                    <div className="bg-white rounded-3xl border border-orange-100 p-6 flex flex-col justify-between gap-4">
+                        <div>
+                            <p className="text-[10px] font-black text-orange-500 uppercase tracking-widest mb-1">Warden Support</p>
+                            <p className="text-sm text-slate-500 mb-3">Direct contact for emergencies.</p>
+                            <div className="flex items-center gap-2 text-green-600 bg-green-50 w-fit px-3 py-1.5 rounded-xl border border-green-100">
+                                <Phone size={13} />
+                                <span className="text-xs font-black">+91 98765 43210</span>
                             </div>
                         </div>
-
-                        <a
-                            href="tel:+919876543210"
-                            className="flex items-center justify-center gap-3 p-3 sm:p-4 rounded-2xl sm:rounded-3xl bg-green-600 text-white font-bold hover:bg-green-700 transition-all shadow-md shadow-green-100"
-                        >
-                            CONTACT WARDEN
+                        <a href="tel:+919876543210"
+                            className="flex items-center justify-center gap-2 py-3 rounded-2xl bg-green-500 text-white font-black text-sm hover:bg-green-600 transition-all shadow-md shadow-green-100">
+                            <Phone size={15} /> Contact Warden
                         </a>
-
                     </div>
                 </div>
 
-                {/* SECURITY SECTION */}
-                <div className="bg-white rounded-3xl sm:rounded-[2.5rem] p-6 sm:p-8 border border-slate-100 shadow-sm">
-
-                    <h2 className="text-base sm:text-lg font-bold text-slate-800 mb-6">
-                        Security & Authentication
-                    </h2>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-                        <button
-                            onClick={handleResetRequest}
-                            disabled={loading}
-                            className="p-4 sm:p-5 bg-orange-50 border border-orange-100 rounded-2xl sm:rounded-[2rem] text-orange-700 font-black hover:bg-orange-600 hover:text-white transition-all disabled:opacity-50"
-                        >
-                            {loading ? "SENDING OTP..." : "CHANGE PASSWORD"}
+                {/* Security */}
+                <div className="bg-white rounded-3xl border border-orange-100 p-6">
+                    <p className="text-[10px] font-black text-orange-500 uppercase tracking-widest mb-4">Security & Authentication</p>
+                    <div className="grid sm:grid-cols-2 gap-3">
+                        <button onClick={handleResetRequest} disabled={loading}
+                            className="flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-orange-50 border border-orange-200 text-orange-600 font-black text-sm hover:bg-orange-500 hover:text-white transition-all disabled:opacity-50">
+                            <KeyRound size={15} /> {loading ? "Sending OTP..." : "Change Password"}
                         </button>
-
-                        <button
-                            onClick={handleVerifyRequest}
-                            className="p-4 sm:p-5 bg-indigo-50 border border-indigo-100 rounded-2xl sm:rounded-[2rem] text-indigo-700 font-black hover:bg-indigo-600 hover:text-white transition-all"
-                        >
-                            VERIFY EMAIL
+                        <button onClick={handleVerifyRequest} disabled={loading}
+                            className="flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-blue-50 border border-blue-100 text-blue-600 font-black text-sm hover:bg-blue-500 hover:text-white transition-all disabled:opacity-50">
+                            <MailCheck size={15} /> Verify Email
                         </button>
-
                     </div>
                 </div>
 
-                {/* DANGER ZONE */}
-                <div className="bg-red-50/40 rounded-3xl sm:rounded-[2.5rem] p-6 sm:p-8 border border-red-100">
-
-                    <h2 className="text-base sm:text-lg font-bold text-red-800 mb-4">
-                        DANGER ZONE
-                    </h2>
-
-                    <div className="bg-white p-5 sm:p-6 rounded-2xl sm:rounded-[2rem] border border-red-100 flex flex-col md:flex-row items-center justify-between gap-4">
-
-                        <p className="text-xs text-slate-500 font-medium text-center md:text-left">
-                            Request the warden to permanently remove your hostel account.
-                        </p>
-
-                        <button
-                            onClick={handleDeleteRequest}
-                            className="w-full md:w-auto px-6 sm:px-8 py-3 sm:py-4 border-2 border-red-600 text-red-600 font-black rounded-xl sm:rounded-2xl hover:bg-red-600 hover:text-white transition-all"
-                        >
-                            DELETE ACCOUNT
+                {/* Danger Zone */}
+                <div className="bg-red-50/40 rounded-3xl border border-red-100 p-6">
+                    <p className="text-[10px] font-black text-red-400 uppercase tracking-widest mb-4">Danger Zone</p>
+                    <div className="bg-white rounded-2xl border border-red-100 p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div>
+                            <p className="text-sm font-bold text-slate-700">Request Account Deletion</p>
+                            <p className="text-xs text-slate-400 mt-0.5">Sends a request to warden — account is not deleted immediately.</p>
+                        </div>
+                        <button onClick={handleDeleteRequest}
+                            className="shrink-0 flex items-center gap-2 px-6 py-3 border-2 border-red-500 text-red-500 font-black text-sm rounded-2xl hover:bg-red-500 hover:text-white transition-all">
+                            <Trash2 size={15} /> Delete Account
                         </button>
-
                     </div>
-
                 </div>
 
             </div>

@@ -26,18 +26,5 @@ router.post('/reset-password', resetPassword);
 router.post('/create-staff', protect, adminOnly, createStaff);
 
 
-// authRoutes.js mein add karo:
-router.get('/test-email', async (req, res) => {
-    try {
-        await sendEmail(
-            'tukeshofficial072@gmail.com',
-            'Test from SendGrid',
-            'Agar yeh email aaya toh SendGrid kaam kar raha hai!'
-        );
-        res.json({ success: true, message: 'Email sent!' });
-    } catch (err) {
-        res.json({ success: false, error: err.message });
-    }
-});
 
 export default router;
