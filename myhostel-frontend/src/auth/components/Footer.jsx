@@ -110,8 +110,8 @@ const Footer = () => {
                 <div className="border-t border-slate-100 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">
                     <p>© {currentYear} DNYANDA HOSTEL MANAGEMENT SYSTEM</p>
                     <div className="flex gap-6">
-                        <span className="hover:text-slate-600 cursor-pointer">Privacy</span>
-                        <span className="hover:text-slate-600 cursor-pointer">Terms</span>
+                        <span onClick={() => navigate('/legal')} className="hover:text-slate-600 cursor-pointer">Privacy</span>
+                        <span onClick={() => navigate('/legal')} className="hover:text-slate-600 cursor-pointer">Terms</span>
                         <span className="text-orange-500/50">Built for Excellence</span>
                     </div>
                 </div>

@@ -56,6 +56,7 @@ import WardenGatePassPortal from "./warden/pages/WardenGatePassPortal";
 import WardenMessActivity from "./warden/pages/WardenMessActivity";
 import StudentActivity from "./warden/pages/StudentActivity";
 import ResourcesPage from "./auth/components/resources/Resourcespage";
+import LegalPage from "./auth/components/LegalPage";
 
 /* ================= REUSABLE BACK BUTTON ================= */
 const BackButton = () => {
@@ -139,6 +140,8 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/resources" element={<ResourcesPage />} />
+        <Route path="/legal" element={<LegalPage />} />
+
 
         {/* Protected Section - Unified Layout */}
         <Route element={<ProtectedRoute />}>
