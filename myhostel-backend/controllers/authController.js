@@ -3,6 +3,7 @@ import User from '../models/User.js';
 import jwt from 'jsonwebtoken';
 import dotenv from "dotenv";
 import { sendEmail } from '../utils/sendEmail.js';
+import { createNotification } from '../utils/notify.js';
 dotenv.config();
 
 // ========================
@@ -42,6 +43,8 @@ export const registerUser = async (req, res) => {
         });
 
         await newUser.save();
+        // registerUser — after newUser.save()
+await createNotification(newUser._id, `Welcome to Dnyanda Hostel, ${fullName}! 🎉`);
 
         // ✅ Fix: Send email AFTER saving user, non-blocking with await
         try {
@@ -87,7 +90,8 @@ export const verifyOTP = async (req, res) => {
             user.otp.code = undefined;
             user.otp.expiresAt = undefined;
             await user.save();
-
+// verifyOTP — after user.save()
+await createNotification(user._id, "Your account has been verified successfully! ✅");
             const token = jwt.sign(
                 { id: user._id, role: user.role },
                 process.env.JWT_SECRET,
