@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 
 import {
     ClipboardList, ChevronLeft, CheckCircle2,
@@ -128,7 +129,7 @@ const importantRules = [
 // COMPONENT
 // ─────────────────────────────────────────────
 const LeavePage = ({ onBack }) => {
-    
+    const navigate = useNavigate();
     const [openFaq, setOpenFaq] = useState(null);
 
     return (
@@ -151,7 +152,7 @@ const LeavePage = ({ onBack }) => {
                         </div>
                     </div>
                     <button
-                        onClick={() => ()=>{}}
+                        onClick={() => navigate('/leave-management')}
                         className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-black text-xs px-4 py-2.5 rounded-xl shadow-md shadow-orange-200 transition-all active:scale-95"
                     >
                         Apply Now <ArrowRight size={13} />
@@ -359,7 +360,7 @@ const LeavePage = ({ onBack }) => {
                         <p className="text-orange-100 text-xs mt-1">Go to your dashboard and submit your leave request now</p>
                     </div>
                     <button
-                        onClick={() => ()=>{}}
+                        onClick={() => navigate('/leave-management')}
                         className="bg-white text-orange-600 font-black text-sm px-7 py-3 rounded-xl hover:bg-orange-50 transition-all active:scale-95 shrink-0 flex items-center gap-2"
                     >
                         Apply Now <ArrowRight size={15} />
