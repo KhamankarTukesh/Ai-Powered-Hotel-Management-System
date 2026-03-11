@@ -1,32 +1,14 @@
-import nodemailer from 'nodemailer';
+import sgMail from '@sendgrid/mail';
 import dotenv from 'dotenv';
 dotenv.config();
 
-// ✅ Port 465 use karo — Render pe 587 block hota hai
-const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 465,
-    secure: true, // ✅ SSL for port 465
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS  // ✅ Gmail App Password (16 char)
-    }
-});
-
-// ✅ Server start pe verify karo
-transporter.verify((error) => {
-    if (error) {
-        console.error('❌ Email config error:', error.message);
-    } else {
-        console.log('✅ Email server ready!');
-    }
-});
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 export const sendEmail = async (to, subject, text) => {
     try {
-        const info = await transporter.sendMail({
-            from: `"Dnyanda Hostel" <${process.env.EMAIL_USER}>`,
+        await sgMail.send({
             to,
+            from: process.env.SENDGRID_FROM,
             subject,
             html: `
                 <div style="font-family:Arial,sans-serif;max-width:480px;margin:auto;padding:32px;border-radius:16px;border:1px solid #ffedd5;">
@@ -39,9 +21,8 @@ export const sendEmail = async (to, subject, text) => {
             `
         });
         console.log(`✅ Email sent to ${to}`);
-        return info;
     } catch (err) {
-        console.error('❌ Email failed:', err.message);
+        console.error('❌ SendGrid failed:', err.message);
         throw err;
     }
 };
