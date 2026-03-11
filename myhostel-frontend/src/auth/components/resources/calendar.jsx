@@ -136,7 +136,6 @@ const CalendarGrid = ({ year, month, selected, onSelect }) => {
 // MAIN PAGE
 // ─────────────────────────────────────────────
 const CalendarPage = ({ onBack }) => {
-    const navigate    = useNavigate();
     const today       = new Date();
     const [current, setCurrent]     = useState({ year: today.getFullYear(), month: today.getMonth() });
     const [selected, setSelected]   = useState(null);
