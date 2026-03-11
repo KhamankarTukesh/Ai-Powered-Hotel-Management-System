@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import API from '../../api/axios';
 import { toast } from 'react-hot-toast';
-import { ShieldCheck, Phone, KeyRound, MailCheck, Trash2, FileText } from 'lucide-react';
+import { ShieldCheck, Phone, KeyRound, Trash2, FileText, LogOut, User } from 'lucide-react';
 
 const Settings = () => {
     const navigate = useNavigate();
@@ -25,20 +25,12 @@ const Settings = () => {
         } finally { setLoading(false); }
     };
 
-    const handleVerifyRequest = async () => {
-        try {
-            setLoading(true);
-            const res = await API.post('/auth/resend-otp', { email });
-            if (res.status === 200) {
-                toast.success("Verification OTP sent!");
-                navigate('/verify-account', { state: { email } });
-            }
-        } catch (err) {
-            toast.error(err.response?.data?.message || "Verification failed");
-        } finally { setLoading(false); }
+    const handleLogout = () => {
+        localStorage.clear();
+        toast.success("Logged out!");
+        navigate('/login');
     };
 
-    // ✅ No delete route — sends warden notification only
     const handleDeleteRequest = async () => {
         if (!window.confirm("This will send a deletion request to the warden. Continue?")) return;
         try {
@@ -58,15 +50,21 @@ const Settings = () => {
 
             <div className="max-w-3xl mx-auto space-y-5">
 
-                {/* Header */}
-                <div className="flex items-center gap-3 pt-2">
-                    <div className="w-10 h-10 bg-orange-500 rounded-2xl flex items-center justify-center shadow-md shadow-orange-200">
-                        <ShieldCheck size={20} className="text-white" />
+                {/* Header + Account Info */}
+                <div className="bg-white rounded-3xl border border-orange-100 p-5 flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                        <div className="w-11 h-11 bg-orange-500 rounded-2xl flex items-center justify-center shadow-md shadow-orange-200 shrink-0">
+                            <ShieldCheck size={20} className="text-white" />
+                        </div>
+                        <div>
+                            <h1 className="text-base font-black text-slate-800 leading-none">Settings</h1>
+                            <p className="text-xs text-slate-400 mt-0.5">{user?.fullName || 'Student'} · {email}</p>
+                        </div>
                     </div>
-                    <div>
-                        <h1 className="text-xl font-black text-slate-800 leading-none">Settings</h1>
-                        <p className="text-xs text-slate-400 font-medium">Account & preferences</p>
-                    </div>
+                    <button onClick={() => navigate('/student/profile')}
+                        className="flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-xl border border-orange-100 text-orange-500 hover:bg-orange-50 transition-all">
+                        <User size={13} /> Profile
+                    </button>
                 </div>
 
                 {/* Top Cards */}
@@ -76,9 +74,9 @@ const Settings = () => {
                     <div className="bg-white rounded-3xl border border-orange-100 p-6 flex flex-col justify-between gap-4">
                         <div>
                             <p className="text-[10px] font-black text-orange-500 uppercase tracking-widest mb-1">Hostel Policy</p>
-                            <p className="text-sm text-slate-500">Download the latest rules & regulations PDF.</p>
+                            <p className="text-sm text-slate-500">View & download the latest rules and regulations.</p>
                         </div>
-                        <a href="/hostel-details.pdf"
+                        <a href="/utils/hostel-details.pdf" target="_blank" rel="noopener noreferrer"
                             className="flex items-center justify-center gap-2 py-3 rounded-2xl bg-orange-500 text-white font-black text-sm hover:bg-orange-600 transition-all shadow-md shadow-orange-100">
                             <FileText size={15} /> View Hostel Details
                         </a>
@@ -101,17 +99,17 @@ const Settings = () => {
                     </div>
                 </div>
 
-                {/* Security */}
+                {/* Account & Security — Change Password + Logout */}
                 <div className="bg-white rounded-3xl border border-orange-100 p-6">
-                    <p className="text-[10px] font-black text-orange-500 uppercase tracking-widest mb-4">Security & Authentication</p>
+                    <p className="text-[10px] font-black text-orange-500 uppercase tracking-widest mb-4">Account & Security</p>
                     <div className="grid sm:grid-cols-2 gap-3">
                         <button onClick={handleResetRequest} disabled={loading}
                             className="flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-orange-50 border border-orange-200 text-orange-600 font-black text-sm hover:bg-orange-500 hover:text-white transition-all disabled:opacity-50">
                             <KeyRound size={15} /> {loading ? "Sending OTP..." : "Change Password"}
                         </button>
-                        <button onClick={handleVerifyRequest} disabled={loading}
-                            className="flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-blue-50 border border-blue-100 text-blue-600 font-black text-sm hover:bg-blue-500 hover:text-white transition-all disabled:opacity-50">
-                            <MailCheck size={15} /> Verify Email
+                        <button onClick={handleLogout}
+                            className="flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-slate-600 font-black text-sm hover:bg-slate-700 hover:text-white transition-all">
+                            <LogOut size={15} /> Logout
                         </button>
                     </div>
                 </div>

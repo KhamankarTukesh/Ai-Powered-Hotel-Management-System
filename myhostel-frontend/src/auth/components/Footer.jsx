@@ -73,7 +73,13 @@ const Footer = () => {
                             </li>
                             <li onClick={() => goToResource('rules')} className="hover:text-orange-600 cursor-pointer transition-colors flex items-center gap-2 group">
                                 <div className="w-1.5 h-1.5 rounded-full bg-orange-200 group-hover:bg-orange-500 transition-colors" />
-                                Hostel Rules & PDF
+                                Hostel Rules & Regulations
+                            </li>
+                            <li className="hover:text-orange-600 cursor-pointer transition-colors flex items-center gap-2 group">
+                                <a href="/utils/hostel-details.pdf" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-slate-500 hover:text-orange-600 transition-colors">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-orange-200 group-hover:bg-orange-500 transition-colors" />
+                                    Download Rules PDF <ExternalLink size={11}/>
+                                </a>
                             </li>
                             <li onClick={() => goToResource('leave')} className="hover:text-orange-600 cursor-pointer transition-colors flex items-center gap-2 group">
                                 <div className="w-1.5 h-1.5 rounded-full bg-orange-200 group-hover:bg-orange-500 transition-colors" />
