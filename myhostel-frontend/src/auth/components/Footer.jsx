@@ -9,6 +9,12 @@ const Footer = () => {
     const navigate = useNavigate();
     const currentYear = new Date().getFullYear();
 
+    // ✅ Resources navigate karo — state se direct page open hoga
+    const goToResource = (page) => {
+        navigate('/resources', { state: { page } });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
     return (
         <footer className="bg-transparent border-t border-slate-200/50 pt-16 pb-8 w-full mt-auto">
             <div className="max-w-[1440px] mx-auto px-4 sm:px-6 md:px-10 lg:px-12">
@@ -45,15 +51,37 @@ const Footer = () => {
                         </ul>
                     </div>
 
-                    {/* Column 3: Student Resources */}
+                    {/* Column 3: Student Resources ✅ Links added */}
                     <div>
                         <h4 className="font-bold text-slate-900 mb-6 uppercase text-xs tracking-widest">Resources</h4>
                         <ul className="space-y-4 text-sm text-slate-500 font-medium">
-                            <li className="hover:text-slate-800 cursor-pointer">Emergency Contacts</li>
-                            <li className="hover:text-slate-800 cursor-pointer">Hostel Rules & PDF</li>
-                            <li className="hover:text-slate-800 cursor-pointer">Leave Application Guide</li>
-                            <li className="hover:text-slate-800 cursor-pointer flex items-center gap-1">
-                                Academic Calendar <ExternalLink size={12}/>
+                            <li
+                                onClick={() => goToResource('emergency')}
+                                className="hover:text-orange-600 cursor-pointer transition-colors flex items-center gap-2 group"
+                            >
+                                <div className="w-1.5 h-1.5 rounded-full bg-orange-200 group-hover:bg-orange-500 transition-colors" />
+                                Emergency Contacts
+                            </li>
+                            <li
+                                onClick={() => goToResource('rules')}
+                                className="hover:text-orange-600 cursor-pointer transition-colors flex items-center gap-2 group"
+                            >
+                                <div className="w-1.5 h-1.5 rounded-full bg-orange-200 group-hover:bg-orange-500 transition-colors" />
+                                Hostel Rules & PDF
+                            </li>
+                            <li
+                                onClick={() => goToResource('leave')}
+                                className="hover:text-orange-600 cursor-pointer transition-colors flex items-center gap-2 group"
+                            >
+                                <div className="w-1.5 h-1.5 rounded-full bg-orange-200 group-hover:bg-orange-500 transition-colors" />
+                                Leave Application Guide
+                            </li>
+                            <li
+                                onClick={() => goToResource('calendar')}
+                                className="hover:text-orange-600 cursor-pointer transition-colors flex items-center gap-2 group"
+                            >
+                                <div className="w-1.5 h-1.5 rounded-full bg-orange-200 group-hover:bg-orange-500 transition-colors" />
+                                Academic Calendar <ExternalLink size={12} className="ml-1"/>
                             </li>
                         </ul>
                     </div>

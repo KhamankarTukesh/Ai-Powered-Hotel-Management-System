@@ -55,6 +55,7 @@ import WardenRoomRequests from "./warden/pages/RoomChangeRequests";
 import WardenGatePassPortal from "./warden/pages/WardenGatePassPortal";
 import WardenMessActivity from "./warden/pages/WardenMessActivity";
 import StudentActivity from "./warden/pages/StudentActivity";
+import ResourcesPage from "./auth/components/resources/Resourcespage";
 
 /* ================= REUSABLE BACK BUTTON ================= */
 const BackButton = () => {
@@ -137,6 +138,7 @@ function App() {
         <Route path="/verify-otp" element={<VerifyOTP />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/resources" element={<ResourcesPage />} />
 
         {/* Protected Section - Unified Layout */}
         <Route element={<ProtectedRoute />}>
@@ -180,6 +182,7 @@ function App() {
         {/* Fallback Redirects */}
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
+        
       </Routes>
     </Router>
   );
