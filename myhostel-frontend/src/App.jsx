@@ -12,7 +12,7 @@ import { Home } from "lucide-react";
 import { Toaster } from "react-hot-toast";
 
 /* ================= COMPONENTS ================= */
-import Footer from "./auth/components/Footer"; 
+import Footer from "./auth/components/Footer";
 import Navbar from "./student/services/Navbar";
 
 /* ================= AUTH ================= */
@@ -22,6 +22,11 @@ import VerifyOTP from "./auth/pages/VerifyOTP";
 import ForgotPassword from "./auth/pages/ForgotPassword";
 import ResetPassword from "./auth/pages/ResetPassword";
 import ProtectedRoute from "./auth/guards/ProtectedRoute";
+
+/* ================= PAGES ================= */
+import LandingPage from "./auth/components/LandingPage";
+import ResourcesPage from "./auth/components/resources/Resourcespage";
+import LegalPage from "./auth/components/LegalPage";
 
 /* ================= STUDENT ================= */
 import StudentDashboard from "./student/pages/StudentDashboard";
@@ -55,10 +60,8 @@ import WardenRoomRequests from "./warden/pages/RoomChangeRequests";
 import WardenGatePassPortal from "./warden/pages/WardenGatePassPortal";
 import WardenMessActivity from "./warden/pages/WardenMessActivity";
 import StudentActivity from "./warden/pages/StudentActivity";
-import ResourcesPage from "./auth/components/resources/Resourcespage";
-import LegalPage from "./auth/components/LegalPage";
 
-/* ================= REUSABLE BACK BUTTON ================= */
+/* ================= BACK BUTTON ================= */
 const BackButton = () => {
   const navigate = useNavigate();
   return (
@@ -77,14 +80,11 @@ const BackButton = () => {
 const getUserProfile = () => {
   const savedUser = localStorage.getItem("user");
   if (!savedUser) return null;
-  try {
-    return JSON.parse(savedUser);
-  } catch (e) {
-    return null;
-  }
+  try { return JSON.parse(savedUser); }
+  catch (e) { return null; }
 };
 
-/* ================= UNIVERSAL LAYOUT (Fixes White Gaps) ================= */
+/* ================= APP LAYOUT ================= */
 const AppLayout = () => {
   const location = useLocation();
   const [profile, setProfile] = useState(getUserProfile());
@@ -93,39 +93,33 @@ const AppLayout = () => {
     setProfile(getUserProfile());
   }, [location.pathname]);
 
-  const isDashboard = 
-    location.pathname === "/student/dashboard" || 
+  const isDashboard =
+    location.pathname === "/student/dashboard" ||
     location.pathname === "/warden/dashboard";
 
   return (
-    // Force the background color on the entire wrapper
     <div className="min-h-screen w-full bg-[#fffaf5] flex flex-col relative overflow-x-hidden">
       <Navbar profile={profile} />
       {!isDashboard && <BackButton />}
-      
-      {/* pt-28 ensures content starts below Navbar.
-         flex-grow ensures the footer is pushed to the bottom.
-      */}
       <main className="flex-grow pt-28 pb-10 px-4 sm:px-6 w-full max-w-[1600px] mx-auto transition-all duration-300">
         <Outlet />
       </main>
-      
       <Footer />
     </div>
   );
 };
 
-/* ================= APP COMPONENT ================= */
+/* ================= APP ================= */
 function App() {
   return (
     <Router>
-      <Toaster 
-        position="top-center" 
+      <Toaster
+        position="top-center"
         toastOptions={{
           duration: 4000,
-          style: { 
-            borderRadius: '16px', 
-            background: '#1e293b', 
+          style: {
+            borderRadius: '16px',
+            background: '#1e293b',
             color: '#fff',
             fontWeight: '600'
           },
@@ -133,59 +127,62 @@ function App() {
       />
 
       <Routes>
-        {/* Public Routes - No Navbar/Footer */}
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/verify-otp" element={<VerifyOTP />} />
+
+        {/* ✅ Landing page — sabse pehle "/" */}
+        <Route path="/" element={<LandingPage />} />
+
+        {/* Public Routes — no Navbar/Footer */}
+        <Route path="/login"           element={<Login />} />
+        <Route path="/register"        element={<Register />} />
+        <Route path="/verify-otp"      element={<VerifyOTP />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="/resources" element={<ResourcesPage />} />
-        <Route path="/legal" element={<LegalPage />} />
+        <Route path="/reset-password"  element={<ResetPassword />} />
+        <Route path="/resources"       element={<ResourcesPage />} />
+        <Route path="/legal"           element={<LegalPage />} />
 
-
-        {/* Protected Section - Unified Layout */}
+        {/* Protected Routes — with Navbar + Footer */}
         <Route element={<ProtectedRoute />}>
           <Route element={<AppLayout />}>
-            
-            {/* STUDENT ROUTES */}
-            <Route path="/student/dashboard" element={<StudentDashboard />} />
-            <Route path="/student/profile" element={<StudentProfile />} />
-            <Route path="/room-details" element={<RoomDetails />} />
-            <Route path="/notices" element={<Notices />} />
-            <Route path="/mess-panel" element={<MessPanel />} />
-            <Route path="/student-actions" element={<StudentActions />} />
-            <Route path="/leave-management" element={<LeaveManagement />} />
-            <Route path="/complaints" element={<StudentComplaints />} />
-            <Route path="/fees" element={<FeesPage />} />
-            <Route path="/attendance-analytics" element={<AttendanceAnalytics />} />
-            <Route path="/gate-pass-manager" element={<GatePassManager />} />
-            <Route path="/activity-history" element={<ActivityHistory />} />
-            <Route path="/settings" element={<Settings />} />
 
-            {/* WARDEN ROUTES */}
-            <Route path="/warden/dashboard" element={<WardenDashboard />} />
-            <Route path="/markattendance" element={<MarkAttendance />} />
-            <Route path="/warden/complaints" element={<WardenComplaintDashboard />} />
-            <Route path="/warden/fees" element={<CreateFee />} />
-            <Route path="/warden/verify" element={<WardenVerifyPayments />} />
-            <Route path="/warden/actions" element={<WardenFeeActions />} />
-            <Route path="/warden/management" element={<WardenManagement />} />
-            <Route path="/warden/feedashboard" element={<WardenFeeDashboard />} />
-            <Route path="/warden/leave" element={<WardenLeaveManagement />} />
-            <Route path="/warden/menu" element={<MessMenuEditor />} />
-            <Route path="/warden/notices" element={<WardenNoticeManager />} />
-            <Route path="/warden/rooms" element={<WardenRoomManager />} />
-            <Route path="/warden/room-requests" element={<WardenRoomRequests />} />
-            <Route path="/warden/gate-pass" element={<WardenGatePassPortal />} />
-            <Route path="/warden/mess/activity" element={<WardenMessActivity />} />
+            {/* STUDENT */}
+            <Route path="/student/dashboard"    element={<StudentDashboard />} />
+            <Route path="/student/profile"      element={<StudentProfile />} />
+            <Route path="/room-details"         element={<RoomDetails />} />
+            <Route path="/notices"              element={<Notices />} />
+            <Route path="/mess-panel"           element={<MessPanel />} />
+            <Route path="/student-actions"      element={<StudentActions />} />
+            <Route path="/leave-management"     element={<LeaveManagement />} />
+            <Route path="/complaints"           element={<StudentComplaints />} />
+            <Route path="/fees"                 element={<FeesPage />} />
+            <Route path="/attendance-analytics" element={<AttendanceAnalytics />} />
+            <Route path="/gate-pass-manager"    element={<GatePassManager />} />
+            <Route path="/activity-history"     element={<ActivityHistory />} />
+            <Route path="/settings"             element={<Settings />} />
+
+            {/* WARDEN */}
+            <Route path="/warden/dashboard"      element={<WardenDashboard />} />
+            <Route path="/markattendance"        element={<MarkAttendance />} />
+            <Route path="/warden/complaints"     element={<WardenComplaintDashboard />} />
+            <Route path="/warden/fees"           element={<CreateFee />} />
+            <Route path="/warden/verify"         element={<WardenVerifyPayments />} />
+            <Route path="/warden/actions"        element={<WardenFeeActions />} />
+            <Route path="/warden/management"     element={<WardenManagement />} />
+            <Route path="/warden/feedashboard"   element={<WardenFeeDashboard />} />
+            <Route path="/warden/leave"          element={<WardenLeaveManagement />} />
+            <Route path="/warden/menu"           element={<MessMenuEditor />} />
+            <Route path="/warden/notices"        element={<WardenNoticeManager />} />
+            <Route path="/warden/rooms"          element={<WardenRoomManager />} />
+            <Route path="/warden/room-requests"  element={<WardenRoomRequests />} />
+            <Route path="/warden/gate-pass"      element={<WardenGatePassPortal />} />
+            <Route path="/warden/mess/activity"  element={<WardenMessActivity />} />
             <Route path="/warden/student-activity" element={<StudentActivity />} />
+
           </Route>
         </Route>
 
-        {/* Fallback Redirects */}
-        <Route path="/" element={<Navigate to="/login" replace />} />
+        {/* ✅ Fallback — unknown routes → login */}
         <Route path="*" element={<Navigate to="/login" replace />} />
-        
+
       </Routes>
     </Router>
   );
