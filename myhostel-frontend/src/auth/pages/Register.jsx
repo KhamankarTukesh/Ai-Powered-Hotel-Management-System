@@ -145,29 +145,6 @@ const Register = () => {
                 {/* Form Card */}
                 <div className="bg-white/90 backdrop-blur-sm border border-orange-100 rounded-3xl shadow-xl shadow-orange-50/60 p-5 sm:p-7">
 
-                    {/* ✅ Google Button — form ke upar */}
-                    <div className="mb-6">
-                        <button
-                            type="button"
-                            onClick={() => handleGoogleRegister()}
-                            disabled={gLoading}
-                            className="w-full flex items-center justify-center gap-3 py-3.5 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 transition-all font-bold text-sm text-slate-700 shadow-sm active:scale-95 disabled:opacity-60"
-                        >
-                            {gLoading
-                                ? <Loader2 className="animate-spin text-orange-500" size={18} />
-                                : <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-5 h-5" alt="Google" />
-                            }
-                            {gLoading ? 'Creating account...' : 'Continue with Google'}
-                        </button>
-
-                        {/* Divider */}
-                        <div className="flex items-center gap-3 mt-4">
-                            <div className="flex-1 h-px bg-orange-100" />
-                            <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest">or register manually</span>
-                            <div className="flex-1 h-px bg-orange-100" />
-                        </div>
-                    </div>
-
                     <form onSubmit={handleRegister} className="space-y-6">
 
                         {/* ── Personal Info ── */}
@@ -280,6 +257,27 @@ const Register = () => {
                                     )}
                                 </AnimatePresence>
                             </motion.button>
+
+                            {/* ✅ Divider */}
+                            <div className="flex items-center gap-3 pt-1">
+                                <div className="flex-1 h-px bg-orange-100" />
+                                <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest">or</span>
+                                <div className="flex-1 h-px bg-orange-100" />
+                            </div>
+
+                            {/* ✅ Google Button — bottom */}
+                            <button
+                                type="button"
+                                onClick={() => handleGoogleRegister()}
+                                disabled={gLoading}
+                                className="w-full flex items-center justify-center gap-3 py-3.5 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 transition-all font-bold text-sm text-slate-700 shadow-sm active:scale-95 disabled:opacity-60"
+                            >
+                                {gLoading
+                                    ? <Loader2 className="animate-spin text-orange-500" size={18} />
+                                    : <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-5 h-5" alt="Google" />
+                                }
+                                {gLoading ? 'Creating account...' : 'Continue with Google'}
+                            </button>
 
                             <p className="text-center text-xs text-slate-400">
                                 Already have an account?{' '}
