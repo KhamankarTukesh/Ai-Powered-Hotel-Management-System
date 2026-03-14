@@ -12,8 +12,7 @@ import { useGoogleLogin } from '@react-oauth/google';
 import axios from 'axios';
 import API from '../../api/axios';
 
-const inputBase =
-    "w-full pl-11 pr-4 py-3 rounded-xl border border-orange-100 bg-white/80 focus:ring-2 focus:ring-orange-400/20 focus:border-orange-400 outline-none transition-all text-slate-800 placeholder:text-slate-400 text-sm font-medium";
+const inputBase = "w-full pl-11 pr-4 py-3 rounded-xl border border-orange-100 bg-white/80 focus:ring-2 focus:ring-orange-400/20 focus:border-orange-400 outline-none transition-all text-slate-800 placeholder:text-slate-400 text-sm font-medium";
 
 const InputField = ({ icon: Icon, children }) => (
     <div className="relative">
@@ -34,23 +33,30 @@ const SectionHeading = ({ icon: Icon, label }) => (
 
 const Register = () => {
     const navigate = useNavigate();
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading]   = useState(false);
     const [gLoading, setGLoading] = useState(false);
-    const [image, setImage] = useState(null);
+    const [image, setImage]       = useState(null);
     const [formData, setFormData] = useState({
         fullName: '', email: '', password: '',
         rollNumber: '', department: '', phone: '',
         course: '', batch: '', currentYear: '',
     });
 
-    const handleChange = (e) =>
-        setFormData({ ...formData, [e.target.name]: e.target.value });
+    const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
+
+    // ✅ Role-based navigate helper
+    const navigateByRole = (role) => {
+        if (role === 'warden' || role === 'admin') {
+            navigate('/warden/dashboard', { replace: true });
+        } else {
+            navigate('/student/dashboard', { replace: true });
+        }
+    };
 
     const handleRegister = async (e) => {
         e.preventDefault();
         setLoading(true);
         const data = new FormData();
-
         data.append('fullName', formData.fullName);
         data.append('email', formData.email);
         data.append('password', formData.password);
@@ -61,7 +67,6 @@ const Register = () => {
         data.append('studentDetails[batch]', formData.batch);
         data.append('studentDetails[currentYear]', formData.currentYear);
         if (image) data.append('idCardImage', image);
-
         try {
             await register(data);
             toast.success('Registration successful! Check your email for OTP.');
@@ -73,7 +78,7 @@ const Register = () => {
         }
     };
 
-    // ✅ Google Register
+    // ✅ Google Register — role-based navigate
     const handleGoogleRegister = useGoogleLogin({
         onSuccess: async (tokenResponse) => {
             setGLoading(true);
@@ -86,24 +91,29 @@ const Register = () => {
 
                 const res = await API.post('/auth/google', {
                     email: googleUser.email,
-                    name: googleUser.name,
+                    name:  googleUser.name,
                 });
 
                 localStorage.clear();
                 localStorage.setItem('token', res.data.token);
                 localStorage.setItem('user', JSON.stringify(res.data.user));
-                localStorage.setItem('role', res.data.user.role.toLowerCase());
+
+                const userRole = res.data.user.role.toLowerCase();
+                localStorage.setItem('role', userRole);
 
                 toast.success(`Welcome, ${googleUser.name.split(' ')[0]}! 🎉`, { id: gToast });
 
-                // ⚠️ Remind to complete profile
-                setTimeout(() => {
-                    toast('📝 Please complete your profile — add roll number, department & guardian details.', {
-                        duration: 5000, icon: '⚠️',
-                    });
-                }, 1500);
+                // ✅ Profile incomplete reminder — only for new students
+                if (userRole === 'student') {
+                    setTimeout(() => {
+                        toast('📝 Please complete your profile — add roll number & department.', {
+                            duration: 5000, icon: '⚠️',
+                        });
+                    }, 1500);
+                }
 
-                navigate('/student/dashboard', { replace: true });
+                // ✅ Role check — warden goes to warden dashboard
+                navigateByRole(userRole);
 
             } catch (err) {
                 toast.error(err.response?.data?.message || 'Google Signup Failed', { id: gToast });
@@ -119,7 +129,6 @@ const Register = () => {
             style={{ fontFamily: "'DM Sans', sans-serif" }}>
             <style>{`@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,700;0,9..40,900;1,9..40,400&display=swap');`}</style>
 
-            {/* Background blobs */}
             <div className="fixed inset-0 pointer-events-none overflow-hidden -z-0">
                 <div className="absolute -top-40 -right-40 w-[480px] h-[480px] bg-orange-100/50 rounded-full blur-[120px]" />
                 <div className="absolute -bottom-40 -left-40 w-[400px] h-[400px] bg-amber-100/40 rounded-full blur-[100px]" />
@@ -142,49 +151,41 @@ const Register = () => {
                     </p>
                 </div>
 
-                {/* Form Card */}
                 <div className="bg-white/90 backdrop-blur-sm border border-orange-100 rounded-3xl shadow-xl shadow-orange-50/60 p-5 sm:p-7">
-
                     <form onSubmit={handleRegister} className="space-y-6">
 
-                        {/* ── Personal Info ── */}
+                        {/* Personal Info */}
                         <div>
                             <SectionHeading icon={User} label="Personal Information" />
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div className="sm:col-span-2">
                                     <InputField icon={User}>
-                                        <input type="text" name="fullName" placeholder="Full Name"
-                                            className={inputBase} onChange={handleChange} required />
+                                        <input type="text" name="fullName" placeholder="Full Name" className={inputBase} onChange={handleChange} required />
                                     </InputField>
                                 </div>
                                 <InputField icon={Mail}>
-                                    <input type="email" name="email" placeholder="Email Address"
-                                        className={inputBase} onChange={handleChange} required />
+                                    <input type="email" name="email" placeholder="Email Address" className={inputBase} onChange={handleChange} required />
                                 </InputField>
                                 <InputField icon={Lock}>
-                                    <input type="password" name="password" placeholder="Password"
-                                        className={inputBase} onChange={handleChange} required />
+                                    <input type="password" name="password" placeholder="Password" className={inputBase} onChange={handleChange} required />
                                 </InputField>
                             </div>
                         </div>
 
                         <div className="border-t border-orange-50" />
 
-                        {/* ── Academic & Contact ── */}
+                        {/* Academic & Contact */}
                         <div>
                             <SectionHeading icon={BookOpen} label="Academic & Contact" />
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <InputField icon={Hash}>
-                                    <input type="text" name="rollNumber" placeholder="Roll Number"
-                                        className={inputBase} onChange={handleChange} required />
+                                    <input type="text" name="rollNumber" placeholder="Roll Number" className={inputBase} onChange={handleChange} required />
                                 </InputField>
                                 <InputField icon={Layers}>
-                                    <input type="text" name="course" placeholder="Course (e.g. B.Tech)"
-                                        className={inputBase} onChange={handleChange} required />
+                                    <input type="text" name="course" placeholder="Course (e.g. B.Tech)" className={inputBase} onChange={handleChange} required />
                                 </InputField>
                                 <InputField icon={BookOpen}>
-                                    <select name="department" className={inputBase + " appearance-none cursor-pointer"}
-                                        onChange={handleChange} required>
+                                    <select name="department" className={inputBase + " appearance-none cursor-pointer"} onChange={handleChange} required>
                                         <option value="">Select Department</option>
                                         <option value="Computer Engineering">Computer Science</option>
                                         <option value="Electrical Engineering">Electrical Eng.</option>
@@ -193,12 +194,10 @@ const Register = () => {
                                     </select>
                                 </InputField>
                                 <InputField icon={Calendar}>
-                                    <input type="text" name="batch" placeholder="Batch (e.g. 2022-26)"
-                                        className={inputBase} onChange={handleChange} required />
+                                    <input type="text" name="batch" placeholder="Batch (e.g. 2022-26)" className={inputBase} onChange={handleChange} required />
                                 </InputField>
                                 <InputField icon={GraduationCap}>
-                                    <select name="currentYear" className={inputBase + " appearance-none cursor-pointer"}
-                                        onChange={handleChange} required defaultValue="">
+                                    <select name="currentYear" className={inputBase + " appearance-none cursor-pointer"} onChange={handleChange} required defaultValue="">
                                         <option value="" disabled>Current Year</option>
                                         <option value="1">1st Year</option>
                                         <option value="2">2nd Year</option>
@@ -207,31 +206,24 @@ const Register = () => {
                                     </select>
                                 </InputField>
                                 <InputField icon={Phone}>
-                                    <input type="text" name="phone" placeholder="Phone Number"
-                                        className={inputBase} onChange={handleChange} required />
+                                    <input type="text" name="phone" placeholder="Phone Number" className={inputBase} onChange={handleChange} required />
                                 </InputField>
                             </div>
                         </div>
 
                         <div className="border-t border-orange-50" />
 
-                        {/* ── ID Upload ── */}
+                        {/* ID Upload */}
                         <div>
                             <SectionHeading icon={UploadCloud} label="Identity Verification" />
-                            <label htmlFor="idUpload"
-                                className="flex items-center gap-4 w-full px-4 py-3.5 rounded-2xl border-2 border-dashed border-orange-200 bg-orange-50/40 hover:bg-orange-50 hover:border-orange-300 transition-all cursor-pointer group">
-                                <input type="file" id="idUpload" className="hidden" accept=".pdf,.jpg,.jpeg,.png"
-                                    onChange={(e) => setImage(e.target.files[0])} />
+                            <label htmlFor="idUpload" className="flex items-center gap-4 w-full px-4 py-3.5 rounded-2xl border-2 border-dashed border-orange-200 bg-orange-50/40 hover:bg-orange-50 hover:border-orange-300 transition-all cursor-pointer group">
+                                <input type="file" id="idUpload" className="hidden" accept=".pdf,.jpg,.jpeg,.png" onChange={(e) => setImage(e.target.files[0])} />
                                 <div className="shrink-0 w-9 h-9 rounded-xl bg-white shadow-sm flex items-center justify-center group-hover:scale-105 transition-transform">
                                     {image ? <CheckCircle2 size={18} className="text-green-500" /> : <Camera size={18} className="text-orange-400" />}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-bold text-slate-700 truncate">
-                                        {image ? image.name : 'Upload Student ID / Aadhar Card'}
-                                    </p>
-                                    <p className="text-[11px] text-slate-400 mt-0.5">
-                                        {image ? 'File selected ✓' : 'PDF, JPG or PNG · Max 5MB'}
-                                    </p>
+                                    <p className="text-sm font-bold text-slate-700 truncate">{image ? image.name : 'Upload Student ID / Aadhar Card'}</p>
+                                    <p className="text-[11px] text-slate-400 mt-0.5">{image ? 'File selected ✓' : 'PDF, JPG or PNG · Max 5MB'}</p>
                                 </div>
                                 {!image && (
                                     <span className="shrink-0 text-[11px] font-bold text-orange-500 border border-orange-200 bg-white rounded-lg px-3 py-1.5 group-hover:bg-orange-500 group-hover:text-white transition-all whitespace-nowrap">
@@ -241,7 +233,7 @@ const Register = () => {
                             </label>
                         </div>
 
-                        {/* ── Submit ── */}
+                        {/* Submit */}
                         <div className="space-y-3 pt-1">
                             <motion.button type="submit" disabled={loading} whileTap={{ scale: 0.97 }}
                                 className="w-full py-3.5 rounded-2xl font-black text-white text-sm flex items-center justify-center gap-2 transition-all disabled:opacity-60 disabled:cursor-not-allowed bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 shadow-lg shadow-orange-200 active:scale-95">
@@ -258,20 +250,16 @@ const Register = () => {
                                 </AnimatePresence>
                             </motion.button>
 
-                            {/* ✅ Divider */}
+                            {/* Divider */}
                             <div className="flex items-center gap-3 pt-1">
                                 <div className="flex-1 h-px bg-orange-100" />
                                 <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest">or</span>
                                 <div className="flex-1 h-px bg-orange-100" />
                             </div>
 
-                            {/* ✅ Google Button — bottom */}
-                            <button
-                                type="button"
-                                onClick={() => handleGoogleRegister()}
-                                disabled={gLoading}
-                                className="w-full flex items-center justify-center gap-3 py-3.5 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 transition-all font-bold text-sm text-slate-700 shadow-sm active:scale-95 disabled:opacity-60"
-                            >
+                            {/* Google Button */}
+                            <button type="button" onClick={() => handleGoogleRegister()} disabled={gLoading}
+                                className="w-full flex items-center justify-center gap-3 py-3.5 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 transition-all font-bold text-sm text-slate-700 shadow-sm active:scale-95 disabled:opacity-60">
                                 {gLoading
                                     ? <Loader2 className="animate-spin text-orange-500" size={18} />
                                     : <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-5 h-5" alt="Google" />
