@@ -57,6 +57,7 @@ import MessMenuEditor from "./warden/pages/MessMenuEditor";
 import WardenNoticeManager from "./warden/pages/WardenNoticeManager";
 import WardenRoomManager from "./warden/pages/WardenRoomManager";
 import WardenRoomRequests from "./warden/pages/RoomChangeRequests";
+import WardenProfile from "./warden/pages/WardenProfile";
 import WardenGatePassPortal from "./warden/pages/WardenGatePassPortal";
 import WardenMessActivity from "./warden/pages/WardenMessActivity";
 import StudentActivity from "./warden/pages/StudentActivity";
@@ -161,6 +162,7 @@ function App() {
 
             {/* WARDEN */}
             <Route path="/warden/dashboard"      element={<WardenDashboard />} />
+            <Route path="/warden/profile" element={<WardenProfile />} />
             <Route path="/markattendance"        element={<MarkAttendance />} />
             <Route path="/warden/complaints"     element={<WardenComplaintDashboard />} />
             <Route path="/warden/fees"           element={<CreateFee />} />
