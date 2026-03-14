@@ -1,6 +1,7 @@
 import React, { useState, useEffect, lazy, Suspense } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../../api/axios";
+import toast from "react-hot-toast";
 
 // ✅ Fix 1: Lazy load all cards — they only load when needed
 const AccommodationCard = lazy(() => import("../Cards/AccommodationCard"));
@@ -24,6 +25,7 @@ const StudentDashboard = () => {
   const navigate = useNavigate();
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [profileIncomplete, setProfileIncomplete] = useState(false); // ✅ NEW
 
   useEffect(() => {
     const fetchSummary = async () => {
@@ -35,9 +37,11 @@ const StudentDashboard = () => {
           const isExpired = Date.now() - timestamp > CACHE_DURATION;
 
           if (!isExpired) {
-            // Cache valid hai — no API call needed!
             setSummary(data);
             setLoading(false);
+
+            // ✅ NEW: Check profile incomplete from cache
+            checkProfileIncomplete(data);
             return;
           }
         }
@@ -52,6 +56,9 @@ const StudentDashboard = () => {
           JSON.stringify({ data: res.data, timestamp: Date.now() })
         );
 
+        // ✅ NEW: Check profile incomplete after fetch
+        checkProfileIncomplete(res.data);
+
       } catch (err) {
         console.error("Dashboard Fetch Error:", err);
 
@@ -60,6 +67,7 @@ const StudentDashboard = () => {
         if (cached) {
           const { data } = JSON.parse(cached);
           setSummary(data);
+          checkProfileIncomplete(data);
         }
       } finally {
         setLoading(false);
@@ -68,6 +76,17 @@ const StudentDashboard = () => {
 
     fetchSummary();
   }, []);
+
+  // ✅ NEW: Profile incomplete check helper
+  const checkProfileIncomplete = (data) => {
+    const isIncomplete = !data?.profile?.rollNumber || !data?.profile?.department;
+    if (isIncomplete) {
+      setProfileIncomplete(true);
+      toast('📝 Complete your profile to access all features!', {
+        duration: 5000, icon: '⚠️'
+      });
+    }
+  };
 
   /* ---------------- Loading Screen ---------------- */
   if (loading) {
@@ -86,6 +105,25 @@ const StudentDashboard = () => {
   return (
     <div className="bg-[#FFFBF7] min-h-screen text-slate-700 selection:bg-orange-500 selection:text-white pb-10 sm:pb-12 font-['Inter']">
       <main className="w-full max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-10 pt-8 sm:pt-10 lg:pt-14">
+
+        {/* ✅ NEW: Profile Incomplete Banner */}
+        {profileIncomplete && (
+          <div className="mb-6 bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <span className="text-xl">⚠️</span>
+              <div>
+                <p className="text-sm font-black text-amber-800">Profile Incomplete</p>
+                <p className="text-xs text-amber-600">Add your roll number, department & guardian details to unlock all features.</p>
+              </div>
+            </div>
+            <button
+              onClick={() => navigate('/student/profile')}
+              className="shrink-0 text-xs font-black bg-amber-500 text-white px-4 py-2.5 rounded-xl hover:bg-amber-600 transition-all active:scale-95"
+            >
+              Complete Now →
+            </button>
+          </div>
+        )}
 
         {/* ---------------- Header Section ---------------- */}
         <div className="mb-8 sm:mb-10 lg:mb-12 flex flex-col lg:flex-row lg:items-end justify-between gap-6">
