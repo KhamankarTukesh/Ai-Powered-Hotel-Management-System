@@ -15,14 +15,14 @@ const userSchema = new mongoose.Schema({
     },
     password: {
         type: String,
-        required: true,
-        select: false  // ✅ Fix: Password ab sirf explicitly maangne par aayega
+        required: false,  
+        select: false
     },
     role: {
         type: String,
         enum: ['student', 'warden', 'admin', 'staff'],
         default: 'student',
-        index: true  // ✅ Fix: Role-based queries fast hongi
+        index: true
     },
 
     // Student Details: Academic + Contact
@@ -36,7 +36,7 @@ const userSchema = new mongoose.Schema({
             default: ""
         },
         phone: {
-            type: String,  // ✅ String rakha hai (number se leading zero girta hai)
+            type: String,
             default: ""
         },
         idCardImage: {
@@ -64,7 +64,7 @@ const userSchema = new mongoose.Schema({
             default: ""
         },
         guardianContact: {
-            type: String,  // ✅ Fix: Number se String - leading zeros safe rahenge
+            type: String,
             default: ""
         },
         relation: {
@@ -100,11 +100,11 @@ const userSchema = new mongoose.Schema({
     otp: {
         code: {
             type: String,
-            select: false  // ✅ Fix: OTP ab normal queries mein nahi aayega
+            select: false
         },
         expiresAt: {
             type: Date,
-            select: false  // ✅ Fix: Expiry bhi hidden
+            select: false
         }
     }
 

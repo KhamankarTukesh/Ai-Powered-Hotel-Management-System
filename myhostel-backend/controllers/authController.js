@@ -43,8 +43,9 @@ export const registerUser = async (req, res) => {
         });
 
         await newUser.save();
-        // registerUser — after newUser.save()
-await createNotification(newUser._id, `Welcome to Dnyanda Hostel, ${fullName}! 🎉`);
+
+        // ✅ Notification after registration
+        await createNotification(newUser._id, `Welcome to Dnyanda Hostel, ${fullName}! 🎉`);
 
         // ✅ Fix: Send email AFTER saving user, non-blocking with await
         try {
@@ -55,7 +56,6 @@ await createNotification(newUser._id, `Welcome to Dnyanda Hostel, ${fullName}! �
             );
             console.log("✅ OTP Email sent to:", email);
         } catch (mailError) {
-            // ✅ Fix: Email fail hone par user delete mat karo — bas log karo
             console.error("🔴 Email Sending Failed:", mailError.message);
         }
 
@@ -90,8 +90,10 @@ export const verifyOTP = async (req, res) => {
             user.otp.code = undefined;
             user.otp.expiresAt = undefined;
             await user.save();
-// verifyOTP — after user.save()
-await createNotification(user._id, "Your account has been verified successfully! ✅");
+
+            // ✅ Notification after verification
+            await createNotification(user._id, "Your account has been verified successfully! ✅");
+
             const token = jwt.sign(
                 { id: user._id, role: user.role },
                 process.env.JWT_SECRET,
@@ -175,6 +177,13 @@ export const loginUser = async (req, res) => {
             return res.status(403).json({ message: "Please verify your email before logging in." });
         }
 
+        // ✅ Google user check — password null hoga
+        if (!user.password) {
+            return res.status(400).json({
+                message: "This account uses Google Sign-In. Please use Continue with Google."
+            });
+        }
+
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) return res.status(400).json({ message: "Invalid Email or Password" });
 
@@ -205,7 +214,7 @@ export const loginUser = async (req, res) => {
 // ========================
 export const forgotPassword = async (req, res) => {
     try {
-        const { email } = req.body;  // ✅ Fix: Removed stray 'a' that caused crash
+        const { email } = req.body;
         const user = await User.findOne({ email });
         if (!user) return res.status(404).json({ message: "User not found" });
 
@@ -253,6 +262,9 @@ export const resetPassword = async (req, res) => {
         user.password = await bcrypt.hash(newPassword, 8);
         user.otp = { code: undefined, expiresAt: undefined };
         await user.save();
+
+        // ✅ Notification after password reset
+        await createNotification(user._id, "Your password was changed successfully. 🔐 If this wasn't you, contact warden.");
 
         sendEmail(
             user.email,
@@ -307,11 +319,12 @@ export const googleAuth = async (req, res) => {
         let user = await User.findOne({ email });
 
         if (!user) {
+            // ✅ New Google user — auto register
             user = await User.create({
                 fullName: name,
                 email,
-                password: null,
-                isVerified: true,
+                password: null,    // ✅ Google user — no password
+                isVerified: true,  // ✅ Google verified hai already
                 role: 'student',
             });
             await createNotification(user._id,
@@ -336,6 +349,7 @@ export const googleAuth = async (req, res) => {
             }
         });
     } catch (error) {
+        console.error("Google Auth Error:", error.message);
         res.status(500).json({ message: "Google Auth Failed", error: error.message });
     }
 };
