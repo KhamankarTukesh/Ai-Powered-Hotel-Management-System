@@ -1,5 +1,5 @@
 import express from 'express';
-import { registerUser, loginUser, createStaff, verifyOTP, resendOTP,forgotPassword, resetPassword} from '../controllers/authController.js';
+import { registerUser, loginUser, createStaff, verifyOTP, resendOTP,forgotPassword, resetPassword,googleAuth} from '../controllers/authController.js';
 import { protect, adminOnly } from '../middleware/authMiddleware.js';
 import multer from 'multer';
 import { sendEmail } from '../utils/sendEmail.js'; 
@@ -24,7 +24,7 @@ router.post('/login', loginUser);
 router.post('/forgot-password', forgotPassword);
 router.post('/reset-password', resetPassword);
 router.post('/create-staff', protect, adminOnly, createStaff);
-
+router.post('/google', googleAuth);
 
 
 export default router;

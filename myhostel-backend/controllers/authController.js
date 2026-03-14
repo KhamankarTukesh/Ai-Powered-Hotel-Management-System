@@ -296,3 +296,46 @@ export const createStaff = async (req, res) => {
         res.status(500).json({ message: "Server Error", error: error.message });
     }
 };
+
+// ========================
+// 8. GOOGLE AUTH
+// ========================
+export const googleAuth = async (req, res) => {
+    try {
+        const { email, name } = req.body;
+
+        let user = await User.findOne({ email });
+
+        if (!user) {
+            user = await User.create({
+                fullName: name,
+                email,
+                password: null,
+                isVerified: true,
+                role: 'student',
+            });
+            await createNotification(user._id,
+                `Welcome ${name}! 🎉 Please complete your profile — add roll number & department.`
+            );
+        }
+
+        const token = jwt.sign(
+            { id: user._id, role: user.role },
+            process.env.JWT_SECRET,
+            { expiresIn: '1d' }
+        );
+
+        res.status(200).json({
+            message: "Google Login Successful!",
+            token,
+            user: {
+                id: user._id,
+                name: user.fullName,
+                email: user.email,
+                role: user.role
+            }
+        });
+    } catch (error) {
+        res.status(500).json({ message: "Google Auth Failed", error: error.message });
+    }
+};
