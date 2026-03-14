@@ -5,13 +5,13 @@ import { Toaster, toast } from 'react-hot-toast';
 import { Pencil, Check, X, Camera } from 'lucide-react';
 
 const StudentProfile = () => {
-    const [user, setUser]                   = useState(null);
-    const [isSubmitting, setIsSubmitting]   = useState(false);
-    const [isEditing, setIsEditing]         = useState(false);
-    const [isEditingAcademic, setIsEditingAcademic] = useState(false);
+    const [user, setUser]                             = useState(null);
+    const [isSubmitting, setIsSubmitting]             = useState(false);
+    const [isEditing, setIsEditing]                   = useState(false);
+    const [isEditingAcademic, setIsEditingAcademic]   = useState(false);
     const [isSubmittingAcademic, setIsSubmittingAcademic] = useState(false);
-    const [loading, setLoading]             = useState(true);
-    const fileInputRef                      = useRef(null);
+    const [loading, setLoading]                       = useState(true);
+    const fileInputRef                                = useRef(null);
 
     const [formData, setFormData] = useState({
         guardianName: '', relation: '',
@@ -47,16 +47,15 @@ const StudentProfile = () => {
                         phone:       data.studentDetails.phone       || '',
                         course:      data.studentDetails.course      || '',
                         batch:       data.studentDetails.batch       || '',
-                        currentYear: data.studentDetails.currentYear || '',
+                        currentYear: data.studentDetails.currentYear?.toString() || '',
                     });
                 }
 
-                // ✅ Google user — fields empty hain toh remind karo
-                const isGoogleUser = !data?.password;
+                // ✅ Google user — incomplete fields toh auto edit open
                 const isIncomplete = !data?.studentDetails?.rollNumber || !data?.studentDetails?.department;
-                if (isGoogleUser && isIncomplete) {
+                if (isIncomplete) {
                     toast('📝 Complete your academic details!', { duration: 4000, icon: '⚠️' });
-                    setIsEditingAcademic(true); // Auto open edit mode
+                    setIsEditingAcademic(true);
                 }
 
                 if (!data?.parentDetails?.guardianName)
@@ -87,30 +86,11 @@ const StudentProfile = () => {
             const res  = await fetch('https://api.cloudinary.com/v1_1/doge2oezl/image/upload', { method: 'POST', body: form });
             const data = await res.json();
             if (!res.ok) throw new Error();
-
             await API.put('/users/profile/update', { studentDetails: { idCardImage: data.secure_url } });
             setUser(prev => ({ ...prev, studentDetails: { ...(prev?.studentDetails || {}), idCardImage: data.secure_url } }));
             toast.success("Photo updated!", { id: tid });
         } catch {
             toast.error("Upload failed", { id: tid });
-        }
-    };
-
-    // ── Save Parent Details ──
-    const handleSave = async (e) => {
-        e.preventDefault();
-        if (isSubmitting) return;
-        setIsSubmitting(true);
-        const tid = toast.loading("Saving...");
-        try {
-            await API.put('/users/profile/update', { parentDetails: formData });
-            setUser(prev => ({ ...prev, parentDetails: formData }));
-            setIsEditing(false);
-            toast.success("Parent details saved!", { id: tid });
-        } catch {
-            toast.error("Save failed", { id: tid });
-        } finally {
-            setIsSubmitting(false);
         }
     };
 
@@ -135,6 +115,24 @@ const StudentProfile = () => {
         }
     };
 
+    // ── Save Parent Details ──
+    const handleSave = async (e) => {
+        e.preventDefault();
+        if (isSubmitting) return;
+        setIsSubmitting(true);
+        const tid = toast.loading("Saving...");
+        try {
+            await API.put('/users/profile/update', { parentDetails: formData });
+            setUser(prev => ({ ...prev, parentDetails: formData }));
+            setIsEditing(false);
+            toast.success("Parent details saved!", { id: tid });
+        } catch {
+            toast.error("Save failed", { id: tid });
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
     const cancelEdit = () => {
         if (user?.parentDetails) {
             setFormData({
@@ -156,7 +154,7 @@ const StudentProfile = () => {
                 phone:       user.studentDetails.phone       || '',
                 course:      user.studentDetails.course      || '',
                 batch:       user.studentDetails.batch       || '',
-                currentYear: user.studentDetails.currentYear || '',
+                currentYear: user.studentDetails.currentYear?.toString() || '',
             });
         }
         setIsEditingAcademic(false);
@@ -170,6 +168,10 @@ const StudentProfile = () => {
             </div>
         </div>
     );
+
+    // ── Shared input style — same as Register ──
+    const inputCls = "w-full border border-orange-200 rounded-xl px-3 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-orange-300/40 bg-white transition-all";
+    const viewCls  = "w-full bg-orange-50/50 border border-orange-100 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-700 min-h-[42px]";
 
     return (
         <div className="bg-[#fffaf5] min-h-screen text-slate-800">
@@ -211,11 +213,12 @@ const StudentProfile = () => {
 
                         <div className="space-y-8">
 
-                            {/* ── Academic Details — EDITABLE ── */}
+                            {/* ══════════════════════════════
+                                ACADEMIC DETAILS — EDITABLE
+                            ══════════════════════════════ */}
                             <div>
                                 <div className="flex items-center justify-between mb-4">
                                     <h2 className="font-black text-sm uppercase tracking-widest text-orange-500">Academic Details</h2>
-
                                     <AnimatePresence mode="wait">
                                         {!isEditingAcademic ? (
                                             <motion.button key="edit-ac"
@@ -243,54 +246,85 @@ const StudentProfile = () => {
 
                                 <form id="academicForm" onSubmit={handleSaveAcademic}>
                                     <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                        {[
-                                            { label: 'Roll Number',   key: 'rollNumber'  },
-                                            { label: 'Department',    key: 'department'  },
-                                            { label: 'Phone',         key: 'phone'       },
-                                            { label: 'Course',        key: 'course'      },
-                                            { label: 'Batch',         key: 'batch'       },
-                                            { label: 'Current Year',  key: 'currentYear' },
-                                        ].map(({ label, key }) => (
-                                            <div key={key}>
-                                                <label className="text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5 block">{label}</label>
-                                                <AnimatePresence mode="wait">
-                                                    {isEditingAcademic ? (
-                                                        <motion.input key="input"
-                                                            initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 4 }}
-                                                            transition={{ duration: 0.15 }}
-                                                            value={academicData[key]}
-                                                            onChange={(e) => setAcademicData({ ...academicData, [key]: e.target.value })}
-                                                            placeholder={`Enter ${label}`}
-                                                            className="w-full border border-orange-200 rounded-xl px-3 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-orange-300/40 bg-white transition-all"
-                                                        />
-                                                    ) : (
-                                                        <motion.div key="value"
-                                                            initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }}
-                                                            transition={{ duration: 0.15 }}
-                                                            className="w-full bg-orange-50/50 border border-orange-100 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-700 min-h-[42px]">
-                                                            {academicData[key] || <span className="text-slate-300">—</span>}
-                                                        </motion.div>
-                                                    )}
-                                                </AnimatePresence>
-                                            </div>
-                                        ))}
 
-                                        {/* Email — read only always */}
+                                        {/* Roll Number */}
+                                        <div>
+                                            <label className="text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5 block">Roll Number</label>
+                                            {isEditingAcademic
+                                                ? <input value={academicData.rollNumber} onChange={e => setAcademicData({ ...academicData, rollNumber: e.target.value })} placeholder="Enter Roll Number" className={inputCls} />
+                                                : <div className={viewCls}>{academicData.rollNumber || <span className="text-slate-300">—</span>}</div>}
+                                        </div>
+
+                                        {/* Department — dropdown like register */}
+                                        <div>
+                                            <label className="text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5 block">Department</label>
+                                            {isEditingAcademic
+                                                ? <select value={academicData.department} onChange={e => setAcademicData({ ...academicData, department: e.target.value })} className={inputCls + " appearance-none cursor-pointer"}>
+                                                    <option value="">Select Department</option>
+                                                    <option value="Computer Engineering">Computer Science</option>
+                                                    <option value="Electrical Engineering">Electrical Eng.</option>
+                                                    <option value="Mechanical Engineering">Mechanical Eng.</option>
+                                                    <option value="Civil Engineering">Civil Eng.</option>
+                                                  </select>
+                                                : <div className={viewCls}>{academicData.department || <span className="text-slate-300">—</span>}</div>}
+                                        </div>
+
+                                        {/* Phone */}
+                                        <div>
+                                            <label className="text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5 block">Phone</label>
+                                            {isEditingAcademic
+                                                ? <input value={academicData.phone} onChange={e => setAcademicData({ ...academicData, phone: e.target.value })} placeholder="Enter Phone Number" className={inputCls} />
+                                                : <div className={viewCls}>{academicData.phone || <span className="text-slate-300">—</span>}</div>}
+                                        </div>
+
+                                        {/* Course */}
+                                        <div>
+                                            <label className="text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5 block">Course</label>
+                                            {isEditingAcademic
+                                                ? <input value={academicData.course} onChange={e => setAcademicData({ ...academicData, course: e.target.value })} placeholder="e.g. B.Tech" className={inputCls} />
+                                                : <div className={viewCls}>{academicData.course || <span className="text-slate-300">—</span>}</div>}
+                                        </div>
+
+                                        {/* Batch */}
+                                        <div>
+                                            <label className="text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5 block">Batch</label>
+                                            {isEditingAcademic
+                                                ? <input value={academicData.batch} onChange={e => setAcademicData({ ...academicData, batch: e.target.value })} placeholder="e.g. 2022-26" className={inputCls} />
+                                                : <div className={viewCls}>{academicData.batch || <span className="text-slate-300">—</span>}</div>}
+                                        </div>
+
+                                        {/* Current Year — dropdown like register */}
+                                        <div>
+                                            <label className="text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5 block">Current Year</label>
+                                            {isEditingAcademic
+                                                ? <select value={academicData.currentYear} onChange={e => setAcademicData({ ...academicData, currentYear: e.target.value })} className={inputCls + " appearance-none cursor-pointer"}>
+                                                    <option value="">Select Year</option>
+                                                    <option value="1">1st Year</option>
+                                                    <option value="2">2nd Year</option>
+                                                    <option value="3">3rd Year</option>
+                                                    <option value="4">4th Year</option>
+                                                  </select>
+                                                : <div className={viewCls}>{academicData.currentYear ? `${academicData.currentYear}${['st','nd','rd','th'][academicData.currentYear - 1] || 'th'} Year` : <span className="text-slate-300">—</span>}</div>}
+                                        </div>
+
+                                        {/* Email — always read only */}
                                         <div>
                                             <label className="text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5 block">Email</label>
-                                            <div className="w-full bg-slate-50 border border-slate-100 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-500 min-h-[42px]">
+                                            <div className="w-full bg-slate-50 border border-slate-100 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-400 min-h-[42px]">
                                                 {user?.email || '—'}
                                             </div>
                                         </div>
+
                                     </div>
                                 </form>
                             </div>
 
-                            {/* ── Parent Details ── */}
+                            {/* ══════════════════════════════
+                                PARENT DETAILS
+                            ══════════════════════════════ */}
                             <div>
                                 <div className="flex items-center justify-between mb-4">
                                     <h2 className="font-black text-sm uppercase tracking-widest text-orange-500">Parent Details</h2>
-
                                     <AnimatePresence mode="wait">
                                         {!isEditing ? (
                                             <motion.button key="edit"
@@ -335,13 +369,14 @@ const StudentProfile = () => {
                                                             transition={{ duration: 0.15 }}
                                                             value={formData[key]}
                                                             onChange={(e) => setFormData({ ...formData, [key]: e.target.value })}
-                                                            className="w-full border border-orange-200 rounded-xl px-3 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-orange-300/40 bg-white transition-all"
+                                                            placeholder={`Enter ${label}`}
+                                                            className={inputCls}
                                                         />
                                                     ) : (
                                                         <motion.div key="value"
                                                             initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }}
                                                             transition={{ duration: 0.15 }}
-                                                            className="w-full bg-orange-50/50 border border-orange-100 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-700 min-h-[42px]">
+                                                            className={viewCls}>
                                                             {formData[key] || <span className="text-slate-300">—</span>}
                                                         </motion.div>
                                                     )}
