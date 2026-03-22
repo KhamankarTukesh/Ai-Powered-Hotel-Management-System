@@ -61,7 +61,7 @@ import WardenProfile from "./warden/pages/WardenProfile";
 import WardenGatePassPortal from "./warden/pages/WardenGatePassPortal";
 import WardenMessActivity from "./warden/pages/WardenMessActivity";
 import StudentActivity from "./warden/pages/StudentActivity";
-
+import WardenStudentsList from "./warden/pages/WardenStudentsList";
 /* ================= BACK BUTTON ================= */
 const BackButton = () => {
   const navigate = useNavigate();
@@ -178,7 +178,7 @@ function App() {
             <Route path="/warden/gate-pass"      element={<WardenGatePassPortal />} />
             <Route path="/warden/mess/activity"  element={<WardenMessActivity />} />
             <Route path="/warden/student-activity" element={<StudentActivity />} />
-
+            <Route path="/warden/students" element={<WardenStudentsList />} />
           </Route>
         </Route>
 

@@ -20,10 +20,7 @@ export const getUserProfile = async (req, res) => {
             "beds.studentId": req.user.id
         }).select("roomNumber block floor");
 
-        res.json({
-            ...user,
-            allocatedRoom: allocatedRoom || null
-        });
+        res.json({ ...user, allocatedRoom: allocatedRoom || null });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -44,8 +41,7 @@ export const updateProfile = async (req, res) => {
                     const regex = /\/upload\/(?:v\d+\/)?(.+)\.[a-z]+$/;
                     const match = oldUrl.match(regex);
                     if (match && match[1]) {
-                        const publicId = match[1];
-                        await cloudinary.uploader.destroy(publicId);
+                        await cloudinary.uploader.destroy(match[1]);
                     }
                 } catch (delError) {
                     console.error("Cloudinary Delete Error:", delError);
@@ -57,20 +53,21 @@ export const updateProfile = async (req, res) => {
         if (user.role === 'student') {
             user.studentDetails = {
                 ...(user.studentDetails || {}),
-                idCardImage: studentDetails?.idCardImage || user.studentDetails?.idCardImage,
-                phone: studentDetails?.phone || user.studentDetails?.phone,
-                department: studentDetails?.department || user.studentDetails?.department,
-                course: studentDetails?.course || user.studentDetails?.course,
-                batch: studentDetails?.batch || user.studentDetails?.batch,
-                currentYear: studentDetails?.currentYear || user.studentDetails?.currentYear,
+                idCardImage:  studentDetails?.idCardImage  || user.studentDetails?.idCardImage,
+                phone:        studentDetails?.phone        || user.studentDetails?.phone,
+                department:   studentDetails?.department   || user.studentDetails?.department,
+                course:       studentDetails?.course       || user.studentDetails?.course,
+                batch:        studentDetails?.batch        || user.studentDetails?.batch,
+                currentYear:  studentDetails?.currentYear || user.studentDetails?.currentYear,
+                rollNumber:   studentDetails?.rollNumber  || user.studentDetails?.rollNumber,
             };
             if (parentDetails) {
                 user.parentDetails = {
                     ...(user.parentDetails || {}),
-                    guardianName: parentDetails.guardianName || user.parentDetails?.guardianName,
+                    guardianName:    parentDetails.guardianName    || user.parentDetails?.guardianName,
                     guardianContact: parentDetails.guardianContact || user.parentDetails?.guardianContact,
-                    relation: parentDetails.relation || user.parentDetails?.relation,
-                    address: parentDetails.address || user.parentDetails?.address
+                    relation:        parentDetails.relation        || user.parentDetails?.relation,
+                    address:         parentDetails.address         || user.parentDetails?.address
                 };
             }
         }
@@ -88,10 +85,10 @@ export const updateProfile = async (req, res) => {
     }
 };
 
-// 3. Main Dashboard Summary Logic (Fixes the 500 Error)
+// 3. Student Dashboard Summary
 export const getStudentSummary = async (req, res) => {
     try {
-        const studentId = req.user.id; 
+        const studentId = req.user.id;
         const todayDay = new Intl.DateTimeFormat('en-US', { weekday: 'long' }).format(new Date());
 
         const [student, attendanceRecords, fees, gatepass, mess, complaint, leave, notice, roomInfo] = await Promise.all([
@@ -106,15 +103,15 @@ export const getStudentSummary = async (req, res) => {
             Room.findOne({ "beds.studentId": studentId }).lean()
         ]);
 
-        const totalDays = attendanceRecords.length;
-        const presentDays = attendanceRecords.filter(a => a.status === 'Present').length;
+        const totalDays      = attendanceRecords.length;
+        const presentDays    = attendanceRecords.filter(a => a.status === 'Present').length;
         const attendancePercent = totalDays > 0 ? ((presentDays / totalDays) * 100).toFixed(1) : 0;
 
         res.status(200).json({
             profile: {
-                name: student?.fullName || "Student",
+                name:       student?.fullName || "Student",
                 roomNumber: roomInfo?.roomNumber || "Not Assigned",
-                block: roomInfo?.block || "N/A"
+                block:      roomInfo?.block || "N/A"
             },
             attendance: {
                 percentage: attendancePercent,
@@ -125,19 +122,41 @@ export const getStudentSummary = async (req, res) => {
                 dueDate: fees?.dueDate || null
             },
             mess: {
-                lunch: mess?.lunch || "Not updated",
+                lunch:  mess?.lunch  || "Not updated",
                 dinner: mess?.dinner || "Not updated"
             },
-            gatepass: { status: gatepass?.status || "In Campus" },
+            gatepass:  { status: gatepass?.status  || "In Campus" },
             complaint: { status: complaint?.status || "No complaints" },
-            leave: { status: leave?.status || "No requests" },
+            leave:     { status: leave?.status     || "No requests" },
             notice: {
                 title: notice?.title || "No new notices",
-                date: notice?.createdAt || null
+                date:  notice?.createdAt || null
             }
         });
     } catch (error) {
         console.error("Dashboard Error:", error);
         res.status(500).json({ message: "Internal Server Error", error: error.message });
+    }
+};
+
+// ✅ 4. Get All Students — Warden ke liye (name, room, details)
+export const getAllStudents = async (req, res) => {
+    try {
+        const students = await User.find({ role: 'student' })
+            .select('fullName email studentDetails parentDetails isVerified createdAt')
+            .lean();
+
+        // Har student ka allocated room bhi fetch karo
+        const studentsWithRoom = await Promise.all(
+            students.map(async (student) => {
+                const room = await Room.findOne({ "beds.studentId": student._id })
+                    .select('roomNumber block floor').lean();
+                return { ...student, allocatedRoom: room || null };
+            })
+        );
+
+        res.status(200).json(studentsWithRoom);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
 };
