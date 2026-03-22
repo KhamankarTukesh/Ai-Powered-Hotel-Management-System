@@ -1,7 +1,8 @@
 import express from 'express';
 import { updateProfile, getUserProfile,getStudentSummary ,getAllStudents} from '../controllers/studentController.js';
-import { protect } from '../middleware/authMiddleware.js';
+import { protect , adminOnly } from '../middleware/authMiddleware.js';
 const router = express.Router();
+
 
 // Get current student profile
 router.get('/profile', protect, getUserProfile);
