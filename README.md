@@ -40,7 +40,7 @@ I am a dedicated **Full Stack Engineer** and **Computer Science student** based 
 
 ### 🌐 Socials & Connect
 <p align="left">
-<a href="mailto:tukesh.dev@gmail.com"><img src="https://img.shields.io/badge/Gmail-D14836?style=for-the-badge&logo=gmail&logoColor=white" /></a>
+<a href="mailto:tukeshkhamankar@gmail.com"><img src="https://img.shields.io/badge/Gmail-D14836?style=for-the-badge&logo=gmail&logoColor=white" /></a>
 <a href="https://linkedin.com/in/tukesh-khamankar"><img src="https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white" /></a>
 </p>
 
