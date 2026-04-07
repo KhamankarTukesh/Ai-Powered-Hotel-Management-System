@@ -1,4 +1,4 @@
-# ⚡ Tukesh Khamankar | Full Stack Developer
+# ⚡ Tukesh Khamankar | Full Stack Developer | Automation Expert
 ### Pursuing B.Tech CS @ ZCOER (2024-2028) 🎓
 
 <p align="center">
